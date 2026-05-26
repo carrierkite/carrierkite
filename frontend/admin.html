@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://verifreight-production.up.railway.app">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Dashboard - Verifreight</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+(function() {
+    var retryKey = '_cold_retry';
+    var retries = parseInt(sessionStorage.getItem(retryKey) || '0');
+    if (retries < 2) {
+        window.addEventListener('load', function() {
+            sessionStorage.removeItem(retryKey);
+        });
+        // If the page fails to fully load within 8 seconds, auto-reload
+        var timer = setTimeout(function() {
+            sessionStorage.setItem(retryKey, retries + 1);
+            location.reload();
+        }, 8000);
+        window.addEventListener('load', function() { clearTimeout(timer); });
+    } else {
+        sessionStorage.removeItem(retryKey);
+    }
+})();
+</script>
+
+</head>
+<body class="dashboard-page">
+    
+    <div class="dashboard-container">
+
+        <!-- MAIN -->
+        <main class="dashboard-main">
+
+            <!-- HEADER -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <h1 class="dashboard-title">Super Admin Dashboard</h1>
+                    <p class="dashboard-subtitle">System-wide overview and management</p>
+                </div>
+                <div class="header-right">
+                    <div class="search-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input type="text" placeholder="Search companies..." oninput="filterBrokers(this.value)">
+                    </div>
+                    <button onclick="handleLogout()" style="padding:10px 20px;background:rgba(239,68,68,0.1);color:var(--error);border:1px solid rgba(239,68,68,0.3);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:8px;transition:all 0.2s;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                            <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        Logout
+                    </button>
+                    <div class="user-menu">
+                        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--black);font-size:16px;">S</div>
+                        <div class="user-info">
+                            <span class="user-name">Super Admin</span>
+                            <span class="user-role">Platform Owner</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- STATS -->
+            <div class="stats-grid" id="section-stats">
+                <div class="stat-card">
+                    <div class="stat-icon users">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="real-stat-number" id="stat-total-brokers">—</h3>
+                        <p class="stat-label">Total Companies</p>
+                        <span class="stat-change increase">All time</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="real-stat-number" id="stat-active-brokers">—</h3>
+                        <p class="stat-label">Active Companies</p>
+                        <span class="stat-change increase">Currently enabled</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTENT -->
+            <div class="dashboard-content">
+                <div class="content-left">
+
+                    <!-- COMPANIES TABLE -->
+                    <div class="card" id="section-brokers" style="margin-bottom:30px;">
+                        <div class="card-header">
+                            <h3 class="card-title">Company Management</h3>
+                            <button class="btn btn-small btn-primary" onclick="loadBrokers()">↻ Refresh</button>
+                        </div>
+                        <div id="brokers-loading" class="loading-spinner">
+                            <div class="spinner-sm"></div>
+                            Loading companies...
+                        </div>
+                        <div class="brokers-table" id="brokers-container"></div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN -->
+                <div class="content-right">
+
+                    <!-- SYSTEM HEALTH -->
+                    <div class="card" id="section-health">
+                        <h3 class="card-title" style="margin-bottom:20px;">System Health</h3>
+                        <div class="health-items">
+                            <div class="health-item">
+                                <div class="health-label">
+                                    <span>API Status</span>
+                                    <span class="health-status operational">Operational</span>
+                                </div>
+                                <div class="health-bar"><div class="health-fill" style="width:100%"></div></div>
+                                <span class="health-text">99.9% uptime</span>
+                            </div>
+                            <div class="health-item">
+                                <div class="health-label">
+                                    <span>Database</span>
+                                    <span class="health-status operational">Operational</span>
+                                </div>
+                                <div class="health-bar"><div class="health-fill" style="width:98%"></div></div>
+                                <span class="health-text">Supabase — healthy</span>
+                            </div>
+                            <div class="health-item">
+                                <div class="health-label">
+                                    <span>Email Service</span>
+                                    <span class="health-status operational">Operational</span>
+                                </div>
+                                <div class="health-bar"><div class="health-fill" style="width:100%"></div></div>
+                                <span class="health-text">All systems go</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let allBrokers = [];
+
+        // ─── AUTH ─────────────────────────────────────────────────────
+        function getToken() {
+            const sessionString = localStorage.getItem('session');
+            if (!sessionString) {
+                alert('Not logged in');
+                window.location.href = '/';
+                return null;
+            }
+            const session = JSON.parse(sessionString);
+            if (!session.access_token) {
+                alert('Session expired');
+                window.location.href = '/';
+                return null;
+            }
+            return session.access_token;
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('session');
+            localStorage.removeItem('user');
+            localStorage.removeItem('broker');
+            window.location.href = '/';
+        }
+
+        // ─── SIDEBAR NAV ──────────────────────────────────────────────
+        function navScroll(e, id) {
+            e.preventDefault();
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+        }
+function escapeHTML(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+
+
+        // ─── RENDER BROKERS ───────────────────────────────────────────
+        function renderBrokers(brokers) {
+            const container = document.getElementById('brokers-container');
+
+            if (!brokers || brokers.length === 0) {
+                container.innerHTML = '<div class="empty-state">No companies found.</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Email</th>
+                            <th>Plan</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${brokers.map(broker => `
+                            <tr class="user-row">
+                                <td>
+                                    <div class="carrier-cell">
+                                        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--black);font-size:13px;flex-shrink:0;">
+                                            ${escapeHTML(broker.company_name.charAt(0).toUpperCase())}
+                                        </div>
+                                        <div>
+                                            <div class="carrier-name">${escapeHTML(broker.company_name)}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>${escapeHTML(broker.email)}</td>
+                                <td>
+                                    <select class="plan-select" onchange="changePlan('${broker.id}', this.value)">
+                                        <option value="basic"      ${broker.subscription_plan === 'basic'      ? 'selected' : ''}>Basic</option>
+                                        <option value="pro"        ${broker.subscription_plan === 'pro'        ? 'selected' : ''}>Pro</option>
+                                        <option value="enterprise" ${broker.subscription_plan === 'enterprise' ? 'selected' : ''}>Enterprise</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <span class="status-dot ${broker.is_active ? 'active' : 'inactive'}"></span>
+                                    ${broker.is_active ? 'Active' : 'Disabled'}
+                                </td>
+                                <td>
+                                    <button
+                                        class="${broker.is_active ? 'btn-disable' : 'btn-enable'}"
+                                        onclick="toggleStatus('${broker.id}', ${!broker.is_active})">
+                                        ${broker.is_active ? 'Disable' : 'Enable'}
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // ─── SEARCH FILTER ────────────────────────────────────────────
+        function filterBrokers(query) {
+            if (!query.trim()) { renderBrokers(allBrokers); return; }
+            const q = query.toLowerCase();
+            renderBrokers(allBrokers.filter(b =>
+                b.company_name.toLowerCase().includes(q) ||
+                b.email.toLowerCase().includes(q) ||
+                b.subscription_plan.toLowerCase().includes(q)
+            ));
+        }
+
+        // ─── LOAD BROKERS ─────────────────────────────────────────────
+        async function loadBrokers() {
+            const token = getToken();
+            if (!token) return;
+
+            const loading = document.getElementById('brokers-loading');
+            loading.classList.add('show');
+            document.getElementById('brokers-container').innerHTML = '';
+
+            const res = await fetch('/api/admin/brokers?t=' + Date.now(), {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (res.status === 403) {
+                alert('Access denied — Super Admin only');
+                window.location.href = '/dashboard.html';
+                return;
+            }
+
+            const data = await res.json();
+            loading.classList.remove('show');
+
+            allBrokers = data.brokers || [];
+            renderBrokers(allBrokers);
+        }
+
+        // ─── TOGGLE STATUS ────────────────────────────────────────────
+        async function toggleStatus(id, status) {
+            const token = getToken();
+            if (!token) return;
+
+            const res = await fetch(`/api/admin/brokers/${id}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ is_active: status })
+            });
+
+            const data = await res.json();
+            if (!res.ok) { alert(`Failed (${res.status}): ${data.error}`); return; }
+
+            loadBrokers();
+        }
+
+        // ─── CHANGE PLAN ──────────────────────────────────────────────
+        async function changePlan(id, plan) {
+            const token = getToken();
+            if (!token) return;
+
+            await fetch(`/api/admin/brokers/${id}/plan`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ subscription_plan: plan })
+            });
+
+            loadBrokers();
+        }
+
+        // ─── LOAD ANALYTICS ───────────────────────────────────────────
+        async function loadAnalytics() {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+        const res = await fetch('/api/admin/analytics?t=' + Date.now(), {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+        const data = await res.json();
+
+        document.getElementById('stat-total-brokers').textContent  = data.totalBrokers  ?? '—';
+        document.getElementById('stat-active-brokers').textContent = data.activeBrokers ?? '—';
+
+    } catch (err) {
+        console.error('loadAnalytics error:', err);
+    }
+}
+        // ─── INIT ──────────────────────────────────────────────────────
+        const _token = getToken();
+        if (_token) {
+            loadBrokers();
+            loadAnalytics();
+        }
+
+        async function verifySession() {
+    const sessionString = localStorage.getItem('session');
+    if (!sessionString) {
+        window.location.href = '/';
+        return false;
+    }
+
+    const session = JSON.parse(sessionString);
+
+    try {
+        const res = await fetch('/api/auth/verify-session', {
+            headers: { 'Authorization': `Bearer ${session.access_token}` }
+        });
+
+        if (!res.ok) {
+            // Session expired — clear storage and redirect
+            localStorage.removeItem('session');
+            localStorage.removeItem('user');
+            localStorage.removeItem('broker');
+            alert('Your session has expired. Please log in again.');
+            window.location.href = '/';
+            return false;
+        }
+
+        return true;
+
+    } catch (err) {
+        console.error('Session verification error:', err);
+        return false;
+    }
+}
+
+
+
+
+    </script>
+</body>
+</html>

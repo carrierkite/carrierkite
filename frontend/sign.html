@@ -1,0 +1,794 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://verifreight-production.up.railway.app">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Carrier Packet - Verifreight</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+(function() {
+    var retryKey = '_cold_retry';
+    var retries = parseInt(sessionStorage.getItem(retryKey) || '0');
+    if (retries < 2) {
+        window.addEventListener('load', function() {
+            sessionStorage.removeItem(retryKey);
+        });
+        // If the page fails to fully load within 8 seconds, auto-reload
+        var timer = setTimeout(function() {
+            sessionStorage.setItem(retryKey, retries + 1);
+            location.reload();
+        }, 8000);
+        window.addEventListener('load', function() { clearTimeout(timer); });
+    } else {
+        sessionStorage.removeItem(retryKey);
+    }
+})();
+</script>
+  
+
+  
+
+
+  </head>
+<body class="dashboard-page">
+  <style>
+#page-loading { background: var(--dark-bg, #0a0a0a); }
+</style>
+    <!-- ── LOADING ─────────────────────────────────────────────── -->
+    <div id="page-loading" class="sign-state-screen">
+        <div class="spinner-sm" style="width:48px;height:48px;border-width:4px;"></div>
+        <p class="sign-state-text">Loading your packet...</p>
+    </div>
+
+    <!-- ── ERROR ───────────────────────────────────────────────── -->
+    <div id="page-error" class="sign-state-screen hidden">
+        <div class="sign-state-icon sign-state-icon--error">✕</div>
+        <h2 class="sign-state-title">Invalid or Expired Link</h2>
+        <p id="error-message" class="sign-state-body">
+            This signing link is invalid or has already expired.
+            Please contact your broker for a new link.
+        </p>
+    </div>
+
+    <!-- ── ALREADY SIGNED ──────────────────────────────────────── -->
+    <div id="page-success" class="sign-state-screen hidden">
+        <div class="sign-state-icon sign-state-icon--success">✓</div>
+        <h2 class="sign-state-title">Document Submitted</h2>
+        <p class="sign-state-body">
+            Thank you for signing the carrier packet.<br>
+            Your broker has been notified and will review your signed document shortly.
+        </p>
+    </div>
+
+    <!-- ── MAIN UI ─────────────────────────────────────────────── -->
+    <div id="main-ui" class="hidden">
+
+        <!-- Top bar -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <span class="logo-text">Verifreight</span>
+                <span class="sign-secure-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    Secure &amp; Encrypted
+                </span>
+            </div>
+        </header>
+
+        <!-- Two-column layout -->
+        <div class="sign-layout">
+
+            <!-- LEFT: PDF Viewer -->
+           <!-- LEFT: PDF Viewer -->
+<div class="sign-pdf-col">
+    <div class="sign-pdf-header">
+        <span class="viewer-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Carrier Packet Document
+        </span>
+        <span class="viewer-status">Click anywhere on the document to add text</span>
+    </div>
+
+    <!-- Page navigation -->
+    <div class="sign-pdf-toolbar">
+    <button onclick="changePage(-1)">← Prev</button>
+    <span class="toolbar-page">Page <span id="current-page">1</span> of <span id="total-pages">1</span></span>
+    <button onclick="changePage(1)">Next →</button>
+    <button onclick="undoLast()">↩ Undo</button>
+    <button onclick="clearAllAnnotations()">🗑 Clear</button>
+    <button id="erase-btn" onclick="toggleEraseMode()">🧹 Erase</button>
+    <select id="font-size-select" onchange="updateFontSize(this.value)" 
+    style="padding:4px 8px; font-size:12px; background:var(--dark-gray); border:1px solid rgba(212,175,55,0.2); color:var(--light-gray); border-radius:4px; cursor:pointer;">
+    <option value="9">Small</option>
+    <option value="11" selected>Normal</option>
+    <option value="14">Large</option>
+    <option value="18">X-Large</option>
+    </select>
+    <button class="btn-download" onclick="downloadPdf()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        <span>Download</span>
+    </button>
+    <span class="toolbar-hint">💡 Click anywhere on the document to add text</span>
+</div>
+
+    <div class="sign-pdf-wrap" style="position:relative; overflow:auto;">
+        <div id="pdf-container" style="position:relative; display:inline-block; cursor:text;">
+            <canvas id="pdf-canvas"></canvas>
+            <!-- Text annotations overlay -->
+            <div id="annotations-layer" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
+        </div>
+    </div>
+</div>
+
+            <!-- RIGHT: Form -->
+            <div class="sign-form-col">
+                <div class="sign-form-inner">
+
+                    <!-- Packet info -->
+                    <div class="sign-section">
+                        <h3 class="card-title">Packet Details</h3>
+                        <div class="sign-info-card">
+                            <div class="sign-info-row">
+                                <span class="sign-info-label">Carrier Name</span>
+                                <span class="sign-info-value" id="packet-carrier-name">—</span>
+                            </div>
+                            <div class="sign-info-row">
+                                <span class="sign-info-label">Email</span>
+                                <span class="sign-info-value" id="packet-carrier-email">—</span>
+                            </div>
+                            <div class="sign-info-row sign-info-row--last">
+                                <span class="sign-info-label">Sent Date</span>
+                                <span class="sign-info-value" id="packet-sent-date">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                   <div class="sign-divider"></div>
+
+<!-- Upload section -->
+<div class="sign-section">
+    <h3 class="card-title">Submit Your Documents</h3>
+</div>
+
+<!-- Auto-submit notice -->
+<div class="sign-auto-notice">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+    </svg>
+    <span>
+        <strong style="color:var(--gold);">Add your details directly in the carrier packet</strong> on the left — click anywhere to type. The filled document will be submitted automatically when you click Submit. Upload your MC Certificate, W9, and COI below.
+    </span>
+</div>
+
+                    <!-- Alert -->
+                    <div id="form-alert" class="upload-alert">
+                        <span id="alert-text"></span>
+                    </div>
+
+                    <!-- Full name -->
+                    <div class="form-group">
+                        <label class="form-label" for="carrier-name-upload">
+                            Your Full Name <span class="sign-required">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="carrier-name-upload"
+                            class="form-input"
+                            placeholder="Enter your legal full name"
+                            autocomplete="name"
+                        >
+                    </div>
+
+                    <!-- File upload -->
+                    <div class="sign-divider"></div>
+
+
+<!-- DOC 2: MC Certificate -->
+<div class="sign-doc-block">
+    <div class="sign-doc-label">
+        <span class="sign-doc-title">MC Certificate</span>
+        <span class="sign-doc-badge sign-doc-badge--required">Required</span>
+    </div>
+    <p class="sign-doc-hint">Upload your Motor Carrier operating authority certificate.</p>
+    <div class="file-drop-area" id="drop-zone-mc">
+        <input type="file" id="mc-certificate-file" accept="application/pdf" onchange="onFileChange(this, 'display-mc')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="sign-upload-icon">
+            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+        </svg>
+        <p class="sign-drop-main">Click to upload or drag &amp; drop</p>
+        <p class="sign-drop-sub">PDF only · Max 20MB</p>
+        <p class="file-selected-name hidden" id="display-mc"></p>
+    </div>
+</div>
+
+<!-- DOC 3: W9 -->
+<div class="sign-doc-block">
+    <div class="sign-doc-label">
+        <span class="sign-doc-title">W9 Form</span>
+        <span class="sign-doc-badge sign-doc-badge--required">Required</span>
+    </div>
+    <p class="sign-doc-hint">Upload your completed and signed W9 tax form.</p>
+    <div class="file-drop-area" id="drop-zone-w9">
+        <input type="file" id="w9-file" accept="application/pdf" onchange="onFileChange(this, 'display-w9')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="sign-upload-icon">
+            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+        </svg>
+        <p class="sign-drop-main">Click to upload or drag &amp; drop</p>
+        <p class="sign-drop-sub">PDF only · Max 20MB</p>
+        <p class="file-selected-name hidden" id="display-w9"></p>
+    </div>
+</div>
+
+<!-- DOC 4: COI -->
+<div class="sign-doc-block">
+    <div class="sign-doc-label">
+        <span class="sign-doc-title">Certificate of Insurance (COI)</span>
+        <span class="sign-doc-badge sign-doc-badge--required">Required</span>
+    </div>
+    <p class="sign-doc-hint">Upload your current Certificate of Insurance.</p>
+    <div class="file-drop-area" id="drop-zone-coi">
+        <input type="file" id="coi-file" accept="application/pdf" onchange="onFileChange(this, 'display-coi')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="sign-upload-icon">
+            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+        </svg>
+        <p class="sign-drop-main">Click to upload or drag &amp; drop</p>
+        <p class="sign-drop-sub">PDF only · Max 20MB</p>
+        <p class="file-selected-name hidden" id="display-coi"></p>
+    </div>
+</div>
+
+                    <!-- Submit button -->
+                    <button class="btn btn-primary sign-submit-btn" id="submit-btn" onclick="handleSubmit()">
+                        <div class="spinner-sm sign-btn-spinner hidden" id="btn-spinner"></div>
+                        <span id="btn-label">Submit All Documents</span>
+                        <span class="btn-arrow" id="btn-arrow">→</span>
+                    </button>
+
+                    <!-- Security note -->
+                    <p class="sign-secure-note">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                        Your document is encrypted and transmitted securely.
+                        Only your broker can access it.
+                    </p>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+
+<script>
+const API_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:3000/api'
+  : '/api'; // ✅
+
+const base = window.location.hostname === 'localhost'
+  ? 'http://localhost:3000'
+  : 'https://verifreight-production.up.railway.app';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let currentToken   = null;
+let currentPacket  = null;
+let pdfDoc         = null;
+let currentPageNum = 1;
+let pageRendering  = false;
+let pdfBytes       = null;
+let annotations    = [];
+let activeInput    = null;
+let eraseMode      = false;
+let currentFontSize = 11;
+let resizeTimer;
+
+// ─── SCREEN ──────────────────────────────────────────────────
+function showScreen(id) {
+    ['page-loading','page-error','page-success','main-ui'].forEach(s =>
+        document.getElementById(s).classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+}
+
+// ─── ALERT ───────────────────────────────────────────────────
+function showAlert(msg, type) {
+    const el = document.getElementById('form-alert');
+    document.getElementById('alert-text').textContent = msg;
+    el.className = 'upload-alert show ' + type;
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function hideAlert() {
+    document.getElementById('form-alert').className = 'upload-alert';
+}
+
+// ─── TOKEN ───────────────────────────────────────────────────
+function getTokenFromURL() {
+    return new URLSearchParams(window.location.search).get('token');
+}
+
+// ─── FILE CHANGE ─────────────────────────────────────────────
+function onFileChange(input, displayId) {
+    const display = document.getElementById(displayId);
+    if (input.files.length > 0) {
+        display.textContent = '📎 ' + input.files[0].name;
+        display.classList.remove('hidden');
+    } else {
+        display.textContent = '';
+        display.classList.add('hidden');
+    }
+}
+
+// ─── DRAG & DROP ─────────────────────────────────────────────
+function setupDropZone(zoneId, inputId, displayId) {
+    const zone  = document.getElementById(zoneId);
+    const input = document.getElementById(inputId);
+    ['dragenter','dragover'].forEach(evt =>
+        zone.addEventListener(evt, e => { e.preventDefault(); zone.classList.add('dragover'); }));
+    ['dragleave','drop'].forEach(evt =>
+        zone.addEventListener(evt, e => { e.preventDefault(); zone.classList.remove('dragover'); }));
+    zone.addEventListener('drop', e => {
+        const file = e.dataTransfer.files[0];
+        if (file && file.type === 'application/pdf') {
+            const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files;
+            onFileChange(input, displayId);
+        } else {
+            showAlert('Please drop a valid PDF file.', 'error');
+        }
+    });
+}
+
+// ─── FETCH WITH TIMEOUT ──────────────────────────────────────
+async function fetchWithTimeout(url, options = {}, timeoutMs = 20000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timer);
+        return res;
+    } catch (err) {
+        clearTimeout(timer);
+        if (err.name === 'AbortError')
+            throw new Error('Request timed out. The server may be waking up — please refresh in a few seconds.');
+        throw err;
+    }
+}
+
+// ─── PDF RENDERING ───────────────────────────────────────────
+async function renderPage(num) {
+    if (pageRendering) return;
+    pageRendering = true;
+
+    const page    = await pdfDoc.getPage(num);
+    const canvas  = document.getElementById('pdf-canvas');
+    if (!canvas) { pageRendering = false; return; }
+    const ctx     = canvas.getContext('2d');
+    const container = document.getElementById('pdf-container');
+    const containerWidth = container.parentElement.clientWidth || window.innerWidth;
+    const defaultViewport = page.getViewport({ scale: 1 });
+    const scale = Math.min(1.5, (containerWidth - 20) / defaultViewport.width);
+    const viewport = page.getViewport({ scale });
+
+    canvas.width  = viewport.width;
+    canvas.height = viewport.height;
+    canvas.style.width  = viewport.width  + 'px';
+    canvas.style.height = viewport.height + 'px';
+    container.style.width  = viewport.width  + 'px';
+    container.style.height = viewport.height + 'px';
+
+    const annLayer = document.getElementById('annotations-layer');
+    annLayer.style.width  = '100%';
+    annLayer.style.height = '100%';
+
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    pageRendering = false;
+
+    document.getElementById('current-page').textContent = num;
+    document.getElementById('total-pages').textContent  = pdfDoc.numPages;
+
+    renderAnnotationsForPage(num);
+}
+
+function changePage(delta) {
+    const next = currentPageNum + delta;
+    if (next < 1 || next > pdfDoc.numPages) return;
+    commitActiveInput();
+    currentPageNum = next;
+    renderPage(currentPageNum);
+}
+
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        if (pdfDoc) renderPage(currentPageNum);
+    }, 300);
+});
+
+// ─── CLICK TO TYPE ───────────────────────────────────────────
+function attachCanvasClickListener() {
+    const container = document.getElementById('pdf-container');
+    if (container) container.addEventListener('click', onCanvasClick);
+}
+
+function onCanvasClick(e) {
+    if (e.target.classList.contains('annotation-input')) return;
+    if (e.target.classList.contains('annotation-label')) return;
+    if (eraseMode) return;
+    commitActiveInput();
+
+    const canvas = document.getElementById('pdf-canvas');
+    const rect   = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    if (clickX < 0 || clickY < 0 || clickX > rect.width || clickY > rect.height) return;
+
+    spawnInput(clickX / rect.width, clickY / rect.height);
+}
+
+function toggleEraseMode() {
+    eraseMode = !eraseMode;
+    const btn       = document.getElementById('erase-btn');
+    const container = document.getElementById('pdf-container');
+    if (eraseMode) {
+        btn.style.borderColor  = 'var(--gold)';
+        btn.style.color        = 'var(--gold)';
+        btn.textContent        = '🧹 Erase: ON';
+        container.style.cursor = 'not-allowed';
+    } else {
+        btn.style.borderColor  = '';
+        btn.style.color        = '';
+        btn.textContent        = '🧹 Erase';
+        container.style.cursor = 'text';
+    }
+}
+
+function spawnInput(x, y) {
+    const canvas   = document.getElementById('pdf-canvas');
+    const rect     = canvas.getBoundingClientRect();
+    const annLayer = document.getElementById('annotations-layer');
+    annLayer.style.pointerEvents = 'all';
+
+    const displayX = x * rect.width;
+    const displayY = y * rect.height;
+
+    const input = document.createElement('input');
+    input.type        = 'text';
+    input.className   = 'annotation-input';
+    input.placeholder = 'Type here...';
+    input.style.cssText = `
+        position:absolute; left:${displayX}px; top:${displayY - 10}px;
+        min-width:80px; max-width:400px;
+        background:rgba(255,255,200,0.92); border:1.5px solid #d4af37;
+        border-radius:2px; padding:1px 4px; font-size:${currentFontSize}px;
+        font-family:Helvetica,Arial,sans-serif; color:#000; outline:none;
+        z-index:10; line-height:1.2; box-shadow:0 1px 4px rgba(0,0,0,0.2);`;
+
+    input.addEventListener('input', () => {
+        input.style.width = Math.max(80, input.value.length * 7) + 'px';
+    });
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') commitActiveInput();
+        if (e.key === 'Escape') { input.remove(); activeInput = null; }
+    });
+    input.addEventListener('blur', () => setTimeout(() => commitActiveInput(), 150));
+
+    annLayer.appendChild(input);
+    activeInput = { input, x, y, pageNum: currentPageNum };
+    input.focus();
+}
+
+function commitActiveInput() {
+    if (!activeInput) return;
+    const { input, x, y, pageNum } = activeInput;
+    const text = input.value.trim();
+    if (text) {
+        annotations.push({ id: Date.now(), pageNum, x, y, text, fontSize: currentFontSize });
+        input.remove();
+        renderAnnotationsForPage(pageNum);
+    } else {
+        input.remove();
+    }
+    activeInput = null;
+}
+
+function renderAnnotationsForPage(pageNum) {
+    const canvas   = document.getElementById('pdf-canvas');
+    if (!canvas) return;
+    const rect     = canvas.getBoundingClientRect();
+    const annLayer = document.getElementById('annotations-layer');
+    if (!annLayer) return;
+    annLayer.style.pointerEvents = 'all';
+    annLayer.querySelectorAll('.annotation-label').forEach(el => el.remove());
+
+    annotations.filter(a => a.pageNum === pageNum).forEach(a => {
+        const span = document.createElement('div');
+        span.className   = 'annotation-label';
+        span.dataset.id  = a.id;
+        span.textContent = a.text;
+        span.style.cssText = `
+            position:absolute; left:${a.x * rect.width}px; top:${a.y * rect.height - 10}px;
+            font-size:${a.fontSize || 11}px; font-family:Helvetica,Arial,sans-serif;
+            color:#000; background:rgba(255,255,200,0.88); padding:1px 4px;
+            border-radius:2px; white-space:nowrap; cursor:pointer;
+            pointer-events:all; border:1px dashed rgba(212,175,55,0.5); line-height:1.2;`;
+
+        span.addEventListener('click', e => {
+            e.stopPropagation();
+            if (eraseMode) {
+                annotations = annotations.filter(ann => ann.id !== a.id);
+                renderAnnotationsForPage(currentPageNum);
+                return;
+            }
+            commitActiveInput();
+            annotations = annotations.filter(ann => ann.id !== a.id);
+            span.remove();
+            spawnInput(a.x, a.y);
+            setTimeout(() => {
+                if (activeInput) {
+                    activeInput.input.value = a.text;
+                    activeInput.input.style.width = Math.max(80, a.text.length * 7) + 'px';
+                }
+            }, 10);
+        });
+        annLayer.appendChild(span);
+    });
+}
+
+function updateFontSize(val) { currentFontSize = parseInt(val); }
+
+function undoLast() {
+    const pageAnns = annotations.filter(a => a.pageNum === currentPageNum);
+    if (!pageAnns.length) return;
+    const lastId = pageAnns[pageAnns.length - 1].id;
+    annotations = annotations.filter(a => a.id !== lastId);
+    renderAnnotationsForPage(currentPageNum);
+}
+
+function clearAllAnnotations() {
+    if (!confirm('Clear all text annotations on all pages?')) return;
+    annotations = [];
+    renderAnnotationsForPage(currentPageNum);
+}
+
+// ─── BURN ANNOTATIONS INTO PDF ───────────────────────────────
+async function burnAnnotationsIntoPdf() {
+    const { PDFDocument, rgb, StandardFonts } = PDFLib;
+    const pdfLibDoc = await PDFDocument.load(pdfBytes);
+    const font      = await pdfLibDoc.embedFont(StandardFonts.Helvetica);
+    const pages     = pdfLibDoc.getPages();
+    const canvas    = document.getElementById('pdf-canvas');
+    const canvasRect = canvas.getBoundingClientRect();
+
+    for (const ann of annotations) {
+        const page = pages[ann.pageNum - 1];
+        if (!page) continue;
+        const { width: pdfW, height: pdfH } = page.getSize();
+        const pdfX = ann.x * pdfW;
+        const pdfY = pdfH - (ann.y * pdfH);
+        const fontScale   = pdfW / canvasRect.width;
+        const pdfFontSize = Math.max(6, Math.min((ann.fontSize || 11) * fontScale, 48));
+        page.drawText(ann.text, { x: pdfX, y: pdfY, size: pdfFontSize, font, color: rgb(0,0,0) });
+    }
+    return await pdfLibDoc.save();
+}
+
+async function downloadPdf() {
+    try {
+        const bytes = annotations.length > 0 ? await burnAnnotationsIntoPdf() : pdfBytes;
+        const blob  = new Blob([bytes], { type: 'application/pdf' });
+        const url   = URL.createObjectURL(blob);
+        const a     = document.createElement('a');
+        a.href = url; a.download = 'carrier-packet.pdf'; a.click();
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        showAlert('Failed to download PDF. Please try again.', 'error');
+    }
+}
+
+// ─── VALIDATE FILE ───────────────────────────────────────────
+function validateFile(file, label) {
+    if (!file)                            { showAlert(`Please upload your ${label}.`, 'error'); return false; }
+    if (file.type !== 'application/pdf') { showAlert(`${label} must be a PDF file.`, 'error'); return false; }
+    if (file.size > 20 * 1024 * 1024)   { showAlert(`${label} exceeds the 20MB limit.`, 'error'); return false; }
+    return true;
+}
+
+// ─── LOAD PDF IN BACKGROUND ──────────────────────────────────
+async function loadPdfInBackground(packetUrl) {
+    const toolbar = document.querySelector('.sign-pdf-toolbar');
+    toolbar.style.opacity = '0.4';
+    toolbar.style.pointerEvents = 'none';
+
+    const container = document.getElementById('pdf-container');
+    container.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+             height:400px;color:#888;gap:12px;">
+            <div class="spinner-sm" style="width:36px;height:36px;border-width:3px;"></div>
+            <span>Loading document...</span>
+        </div>`;
+
+    try {
+        const pdfUrl = packetUrl.startsWith('http') ? packetUrl : base + packetUrl;
+        const pdfRes = await fetchWithTimeout(pdfUrl, {}, 30000);
+        if (!pdfRes.ok) throw new Error('Could not fetch PDF');
+
+        const buffer = await pdfRes.arrayBuffer();
+        pdfBytes = buffer.slice(0); // copy for pdf-lib — never share ArrayBuffer
+
+        // Rebuild canvas DOM
+        container.innerHTML = `
+            <canvas id="pdf-canvas"></canvas>
+            <div id="annotations-layer" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></div>`;
+
+        attachCanvasClickListener();
+
+        pdfDoc = await pdfjsLib.getDocument({ data: buffer }).promise; // pdf.js gets the original
+        await renderPage(1);
+
+        toolbar.style.opacity = '';
+        toolbar.style.pointerEvents = '';
+
+    } catch (err) {
+        console.error('PDF load error:', err);
+        container.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                 height:300px;color:#dc3545;gap:8px;padding:20px;text-align:center;">
+                <span style="font-size:32px;">⚠️</span>
+                <strong>Could not load document preview</strong>
+                <p style="font-size:13px;color:#888;">
+                    You can still upload your signed documents on the right.<br>
+                    Download the original packet from your email.
+                </p>
+                <button onclick="loadPdfInBackground('${packetUrl}')"
+                    style="margin-top:8px;padding:8px 16px;background:var(--gold);color:#000;
+                           border:none;border-radius:4px;cursor:pointer;font-weight:600;">
+                    Retry
+                </button>
+            </div>`;
+        toolbar.style.opacity = '0.4';
+        toolbar.style.pointerEvents = 'none';
+    }
+}
+
+// ─── LOAD PACKET ─────────────────────────────────────────────
+async function loadPacket() {
+    currentToken = getTokenFromURL();
+    if (!currentToken) { showScreen('page-error'); return; }
+
+    try {
+        // Fetch only the packet metadata — fast, small JSON response
+        const res  = await fetchWithTimeout(`${API_URL}/signatures/packet/${currentToken}`, {}, 20000);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load packet');
+
+        currentPacket = data.packet;
+
+        if (currentPacket.status === 'signed' || currentPacket.status === 'approved') {
+            showScreen('page-success');
+            return;
+        }
+
+        // Populate UI fields
+        document.getElementById('packet-carrier-name').textContent  = currentPacket.carrier_name  || '—';
+        document.getElementById('packet-carrier-email').textContent = currentPacket.carrier_email || '—';
+        document.getElementById('packet-sent-date').textContent     = currentPacket.sent_at
+            ? new Date(currentPacket.sent_at).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })
+            : '—';
+        document.getElementById('carrier-name-upload').value = currentPacket.carrier_name || '';
+
+        setupDropZone('drop-zone-mc',  'mc-certificate-file', 'display-mc');
+        setupDropZone('drop-zone-w9',  'w9-file',             'display-w9');
+        setupDropZone('drop-zone-coi', 'coi-file',            'display-coi');
+
+        // ✅ Show the UI immediately — PDF loads separately in the background
+        showScreen('main-ui');
+        loadPdfInBackground(currentPacket.packet_url);
+
+   } catch (err) {
+    console.error('loadPacket error:', err);
+    // Auto-retry once after 5 seconds (handles cold start)
+    if (!window._retried) {
+        window._retried = true;
+        document.getElementById('error-message').textContent =
+            'Server is starting up, retrying in 5 seconds...';
+        showScreen('page-error');
+       setTimeout(() => {
+    window._retried = false;
+    showScreen('page-loading');
+    loadPacket();
+}, 2000);
+        return;
+    }
+    document.getElementById('error-message').textContent =
+        err.message || 'Failed to load packet. Please try again later.';
+    showScreen('page-error');
+}
+}
+
+// ─── SUBMIT ──────────────────────────────────────────────────
+async function handleSubmit() {
+    hideAlert();
+    commitActiveInput();
+    await new Promise(r => setTimeout(r, 20));
+
+    const carrierName = document.getElementById('carrier-name-upload').value.trim();
+    const mcCert      = document.getElementById('mc-certificate-file').files[0];
+    const w9          = document.getElementById('w9-file').files[0];
+    const coi         = document.getElementById('coi-file').files[0];
+
+    if (!carrierName) {
+        showAlert('Please enter your full legal name.', 'error');
+        document.getElementById('carrier-name-upload').focus();
+        return;
+    }
+    if (!validateFile(mcCert, 'MC Certificate')) return;
+    if (!validateFile(w9,     'W9 Form'))        return;
+    if (!validateFile(coi,    'Certificate of Insurance')) return;
+
+    const submitBtn = document.getElementById('submit-btn');
+    const spinner   = document.getElementById('btn-spinner');
+    const label     = document.getElementById('btn-label');
+    const arrow     = document.getElementById('btn-arrow');
+
+    submitBtn.disabled = true;
+    spinner.classList.remove('hidden');
+    label.textContent = 'Preparing document...';
+    arrow.classList.add('hidden');
+
+    try {
+        label.textContent = 'Submitting...';
+
+        let finalPdfBytes;
+        if (pdfBytes) {
+            finalPdfBytes = annotations.length > 0 ? await burnAnnotationsIntoPdf() : pdfBytes;
+        } else {
+            // PDF never loaded — submit the other docs without a signed copy
+            finalPdfBytes = null;
+        }
+
+        const formData = new FormData();
+        formData.append('token',         currentToken);
+        formData.append('carrierName',   carrierName);
+        formData.append('signatureType', 'upload');
+
+        if (finalPdfBytes) {
+            formData.append('signedPdf', new Blob([finalPdfBytes], { type:'application/pdf' }), 'signed-packet.pdf');
+        }
+
+        formData.append('mcCertificate', mcCert);
+        formData.append('w9',            w9);
+        formData.append('coi',           coi);
+
+        const res  = await fetchWithTimeout(`${API_URL}/signatures/submit`, { method:'POST', body:formData }, 60000);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to submit documents');
+
+        showScreen('page-success');
+
+    } catch (err) {
+        console.error('handleSubmit error:', err);
+        showAlert(err.message || 'Submission failed. Please try again.', 'error');
+        submitBtn.disabled = false;
+        spinner.classList.add('hidden');
+        label.textContent = 'Submit All Documents';
+        arrow.classList.remove('hidden');
+    }
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+loadPacket();
+</script>
+</body>
+</html>

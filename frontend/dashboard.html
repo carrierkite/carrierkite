@@ -1,0 +1,809 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://verifreight-production.up.railway.app">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Broker Dashboard - Verifreight</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+(function() {
+    var retryKey = '_cold_retry';
+    var retries = parseInt(sessionStorage.getItem(retryKey) || '0');
+    if (retries < 2) {
+        window.addEventListener('load', function() {
+            sessionStorage.removeItem(retryKey);
+        });
+        // If the page fails to fully load within 8 seconds, auto-reload
+        var timer = setTimeout(function() {
+            sessionStorage.setItem(retryKey, retries + 1);
+            location.reload();
+        }, 8000);
+        window.addEventListener('load', function() { clearTimeout(timer); });
+    } else {
+        sessionStorage.removeItem(retryKey);
+    }
+})();
+</script>
+
+
+
+</head>
+<body class="dashboard-page">
+  
+    <div class="dashboard-container">
+        <!-- MAIN CONTENT -->
+        <main class="dashboard-main">
+
+            <!-- HEADER -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <h1 class="dashboard-title">Broker Dashboard</h1>
+                    <p class="dashboard-subtitle">Welcome back, <span id="broker-name">—</span></p>
+                </div>
+                <div class="header-right">
+                    <div class="user-menu">
+                        <div class="user-avatar" id="user-avatar" style="background: linear-gradient(135deg, var(--gold), var(--gold-light)); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--black); font-size:16px; border-radius:50%; width:40px; height:40px;">B</div>
+                        <div class="user-info">
+                            <span class="user-name" id="user-name-display">Broker</span>
+                            <span class="user-role">Company Admin</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- STATS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon pending">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="stat-number-real" id="stat-total">—</h3>
+                        <p class="stat-label">Total Packets</p>
+                        <span class="stat-change increase">All time</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon approved">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="stat-number-real" id="stat-approved">—</h3>
+                        <p class="stat-label">Approved</p>
+                        <span class="stat-change increase">Fully completed</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon carriers">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="stat-number-real" id="stat-signed">—</h3>
+                        <p class="stat-label">Pending Review</p>
+                        <span class="stat-change decrease">Needs approval</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon time">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="stat-number-real" id="stat-sent">—</h3>
+                        <p class="stat-label">Awaiting Signature</p>
+                        <span class="stat-change increase">Sent to carriers</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DASHBOARD CONTENT -->
+            <div class="dashboard-content">
+                <div class="content-left">
+
+                    <!-- UPLOAD CARD -->
+<div class="card" style="margin-bottom: 30px;">
+    <div class="card-header">
+        <h3 class="card-title">Send Carrier Packet</h3>
+    </div>
+
+    <div id="upload-alert" class="upload-alert"></div>
+
+    <div class="upload-form-grid">
+        <div class="form-group">
+            <label class="form-label">Carrier Name</label>
+            <input type="text" id="carrier-name" class="form-input" placeholder="ABC Trucking Co.">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Carrier Email</label>
+            <input type="email" id="carrier-email" class="form-input" placeholder="carrier@company.com">
+        </div>
+    </div>
+
+    <!-- Saved templates -->
+    <div class="form-group" style="margin-bottom:20px;">
+        <label class="form-label">Carrier Packet</label>
+        <div id="template-picker" style="display:flex; flex-direction:column; gap:8px;">
+            <!-- filled by loadTemplates() -->
+        </div>
+        <div id="no-templates-msg" style="display:none; padding:14px; background:rgba(212,175,55,0.05); border:1px dashed rgba(212,175,55,0.2); border-radius:10px; text-align:center; color:var(--light-gray); font-size:13px;">
+            No saved packets yet — upload one below to get started.
+        </div>
+    </div>
+
+    <!-- Upload new -->
+    <div id="new-packet-area">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+            <input type="checkbox" id="upload-new-toggle" class="form-checkbox" onchange="toggleNewUpload(this)">
+            <label for="upload-new-toggle" class="form-label" style="margin:0; cursor:pointer; color:var(--gold);">
+                📎 Upload a new carrier packet instead
+            </label>
+        </div>
+        <div id="new-upload-area" style="display:none; flex-direction:column; gap:12px;">
+            <div class="file-drop-area" onclick="document.getElementById('packet-file').click()">
+                <div style="font-size:28px; margin-bottom:8px;">📎</div>
+                <p>Click to select PDF</p>
+                <small>PDF only · Max 20MB</small>
+                <input type="file" id="packet-file" accept="application/pdf" style="display:none" onchange="updateFileName()">
+            </div>
+            <div id="file-name" class="file-selected-name"></div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="save-as-template" class="form-checkbox" onchange="document.getElementById('template-name-group').style.display = this.checked ? 'block' : 'none'">
+                <label for="save-as-template" class="form-label" style="margin:0; cursor:pointer;">
+                    💾 Save for future use
+                </label>
+            </div>
+            <div id="template-name-group" style="display:none;">
+                <input type="text" id="template-name" class="form-input" placeholder="e.g. Standard Carrier Packet 2025">
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-primary" id="send-btn" onclick="handleSend()" style="width:100%; justify-content:center; margin-top:20px;">
+        <span id="send-btn-label">Send Packet to Carrier</span>
+        <span class="btn-arrow">→</span>
+    </button>
+</div>
+
+                    <!-- PACKETS TABLE CARD -->
+                    <div class="card" id="packets-section">
+                        <div class="card-header">
+                            <h3 class="card-title">My Carrier Packets</h3>
+                        </div>
+
+                        <div id="packets-loading" class="packets-loading">
+                            <div class="spinner-inline"></div>
+                            Loading packets...
+                        </div>
+
+                        <div class="packets-section" id="packets-container"></div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT SIDEBAR -->
+                <div class="content-right">
+
+                    <!-- RECENT ACTIVITY -->
+                    <div class="card activity-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Recent Activity</h3>
+                        </div>
+                        <div class="activity-list" id="activity-list">
+                            <div style="text-align:center; color:var(--light-gray); font-size:14px; padding:20px;">
+                                Activity will appear here as packets are processed.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QUICK ACTIONS -->
+                    <div class="card quick-actions">
+                        <h3 class="card-title" style="margin-bottom:20px;">Quick Actions</h3>
+                        <div class="quick-action-buttons">
+                            <button class="quick-btn" onclick="document.getElementById('carrier-name').scrollIntoView({behavior:'smooth'}); document.getElementById('carrier-name').focus();">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 4v16m8-8H4"/>
+                                </svg>
+                                <span>New Packet</span>
+                            </button>
+                            <button class="quick-btn" onclick="document.getElementById('packets-section').scrollIntoView({behavior:'smooth'})">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span>View All Packets</span>
+                            </button>
+                            <button class="quick-btn" onclick="handleLogout()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                </svg>
+                                <span>Logout</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+
+  <script>
+const API_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:3000/api'
+  : '/api'; // ✅
+  
+  async function authFetch(url, options = {}) {
+    const res = await fetch(url, options);
+    if (res.status === 401) {
+        localStorage.removeItem('session');
+        localStorage.removeItem('user');
+        localStorage.removeItem('broker');
+        window.location.href = '/?session=expired';
+        return null;
+    }
+    return res;
+}
+let currentSession = null;
+let currentBroker = null;
+let selectedTemplateId = null;
+
+function updateFileName() {
+    const input = document.getElementById('packet-file');
+    const el = document.getElementById('file-name');
+    el.textContent = input.files.length > 0 ? '✓ ' + input.files[0].name : '';
+    // Auto-uncheck template selection when new file chosen
+    selectedTemplateId = null;
+    document.querySelectorAll('.template-pill').forEach(p => p.classList.remove('selected'));
+}
+
+function toggleNewUpload(checkbox) {
+    const area = document.getElementById('new-upload-area');
+    area.style.display = checkbox.checked ? 'flex' : 'none';
+    if (!checkbox.checked) {
+        document.getElementById('packet-file').value = '';
+        document.getElementById('file-name').textContent = '';
+    }
+}
+
+
+
+function selectTemplate(id, el) {
+    selectedTemplateId = id;
+    document.querySelectorAll('.template-pill').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    // Uncheck new upload if a template is selected
+    document.getElementById('upload-new-toggle').checked = false;
+    toggleNewUpload({ checked: false });
+}
+
+
+async function handleSend() {
+    hideAlert('upload-alert');
+
+    const carrierName  = document.getElementById('carrier-name').value.trim();
+    const carrierEmail = document.getElementById('carrier-email').value.trim();
+    const isNewUpload  = document.getElementById('upload-new-toggle').checked;
+    const packetFile   = document.getElementById('packet-file').files[0];
+
+    if (!carrierName)  return showAlert('upload-alert', 'Please enter carrier name', 'error');
+    if (!carrierEmail) return showAlert('upload-alert', 'Please enter carrier email', 'error');
+    if (!isNewUpload && !selectedTemplateId) return showAlert('upload-alert', 'Please select a carrier packet or upload a new one', 'error');
+    if (isNewUpload && !packetFile) return showAlert('upload-alert', 'Please select a PDF file to upload', 'error');
+
+    const btn   = document.getElementById('send-btn');
+    const label = document.getElementById('send-btn-label');
+    btn.disabled = true;
+    label.textContent = 'Sending...';
+
+    try {
+        let packet;
+
+        if (isNewUpload) {
+            // Upload new PDF
+            const formData = new FormData();
+            formData.append('packet', packetFile);
+            formData.append('carrierName', carrierName);
+            formData.append('carrierEmail', carrierEmail);
+
+                const res  = await authFetch(`${API_URL}/packets/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${currentSession.access_token}` },
+                    body: formData
+                });
+                if (!res) return;
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            packet = data.packet;
+
+            // Save as template if checked
+            if (document.getElementById('save-as-template').checked) {
+                const templateName = document.getElementById('template-name').value.trim()
+                    || packetFile.name.replace('.pdf', '');
+                await authFetch(`${API_URL}/packets/templates/save`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentSession.access_token}`
+                    },
+                    body: JSON.stringify({ name: templateName, packet_url: packet.packet_url })
+                });
+                await loadTemplates();
+            }
+        } else {
+            // Use saved template
+           const res  = await authFetch(`${API_URL}/packets/upload-from-template`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentSession.access_token}`
+                },
+                body: JSON.stringify({ carrierName, carrierEmail, templateId: selectedTemplateId })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            packet = data.packet;
+        }
+
+        showAlert('upload-alert', '✓ Packet created! Click Send → in the table below to email it to the carrier.', 'success');
+        document.getElementById('carrier-name').value  = '';
+        document.getElementById('carrier-email').value = '';
+        document.getElementById('packet-file').value   = '';
+        document.getElementById('file-name').textContent = '';
+        await loadPackets();
+
+    } catch (err) {
+        showAlert('upload-alert', err.message || 'Failed to create packet', 'error');
+    } finally {
+        btn.disabled = false;
+        label.textContent = 'Send Packet to Carrier';
+    }
+}
+
+async function loadTemplates() {
+    try {
+        const res  = await authFetch(`${API_URL}/packets/templates/list`, {
+            headers: { 'Authorization': `Bearer ${currentSession.access_token}` }
+        });
+        if (!res) return;
+        const data = await res.json();
+        const templates = data.templates || [];
+
+        const picker = document.getElementById('template-picker');
+        const noMsg  = document.getElementById('no-templates-msg');
+
+        if (templates.length === 0) {
+            picker.innerHTML = '';
+            noMsg.style.display = 'block';
+            document.getElementById('upload-new-toggle').checked = true;
+            toggleNewUpload({ checked: true });
+            return;
+        }
+
+        noMsg.style.display = 'none';
+        picker.innerHTML = templates.map(t => `
+            <div class="template-pill" data-id="${t.id}" onclick="selectTemplate('${t.id}', this)">
+                <div style="display:flex; align-items:center; gap:10px; flex:1;">
+                    <span style="font-size:22px;">📄</span>
+                    <div>
+                        <div style="font-weight:600; font-size:14px; color:var(--white);">${t.name}</div>
+                        <div style="font-size:12px; color:var(--light-gray);">Saved ${new Date(t.created_at).toLocaleDateString()}</div>
+                    </div>
+                </div>
+                <button onclick="event.stopPropagation(); deleteTemplate('${t.id}')"
+                    style="padding:4px 8px; background:transparent; border:none; color:var(--light-gray); font-size:16px; cursor:pointer; border-radius:4px; line-height:1;"
+                    title="Delete">🗑</button>
+            </div>
+        `).join('');
+
+        const first = picker.querySelector('.template-pill');
+        if (first) selectTemplate(templates[0].id, first);
+
+    } catch (err) {
+        console.error('Load templates error:', err);
+    }
+}
+
+async function deleteTemplate(templateId) {
+    if (!confirm('Delete this saved packet?')) return;
+    try {
+        await authFetch(`${API_URL}/packets/templates/${templateId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${currentSession.access_token}` }
+        });
+        if (selectedTemplateId === templateId) selectedTemplateId = null;
+        await loadTemplates();
+    } catch (err) {
+        showAlert('upload-alert', 'Failed to delete saved packet', 'error');
+    }
+}
+
+
+async function refreshBrokerIfNeeded() {
+    if (new URLSearchParams(window.location.search).get('payment') !== 'success') return;
+    
+    const storedSession = localStorage.getItem('session');
+    if (!storedSession) return;
+
+    const session = JSON.parse(storedSession);
+    
+    // Retry up to 5 times with 2 second gaps to wait for webhook
+    for (let i = 0; i < 5; i++) {
+        try {
+            const res = await fetch(`${API_URL}/auth/me`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                localStorage.setItem('broker', JSON.stringify(data.broker));
+                
+                // If active, we're done
+                if (data.broker.is_active) {
+                    console.log('Broker activated, attempt', i + 1);
+                    return;
+                }
+            }
+        } catch(e) {
+            console.error('Failed to refresh broker:', e);
+        }
+        
+        // Wait 2 seconds before retrying
+        await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+}
+
+    function checkAuth() {
+      const session = localStorage.getItem('session');
+      const broker = localStorage.getItem('broker');
+
+      if (!session || !broker) {
+        window.location.href = '/';
+        return false;
+      }
+
+      currentSession = JSON.parse(session);
+      currentBroker = JSON.parse(broker);
+      const name = currentBroker.company_name || 'Broker';
+      document.getElementById('broker-name').textContent = name;
+            document.getElementById('user-name-display').textContent = name;
+            document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+
+      return true;
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('session');
+      localStorage.removeItem('user');
+      localStorage.removeItem('broker');
+      window.location.href = '/';
+    }
+
+    function showAlert(elementId, message, type) {
+      const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = `upload-alert show ${type}`;
+    }
+    
+    function hideAlert(elementId) {
+      const el = document.getElementById(elementId);
+            el.classList.remove('show');
+    }
+
+
+
+
+
+
+
+    async function sendPacket(packetId) {
+      if (!confirm('Are you sure you want to send this packet to the carrier?')) {
+        return;
+      }
+
+      try {
+        const response = await authFetch(`${API_URL}/packets/${packetId}/send`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${currentSession.access_token}`
+          }
+        });if (!response) return;
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to send packet');
+        }
+
+        alert('Packet sent successfully! The carrier will receive an email with a signing link.');
+        await loadPackets();
+
+      } catch (error) {
+        console.error('Send error:', error);
+        alert(error.message || 'Failed to send packet');
+      }
+    }
+
+    async function reviewPacket(id, action) {
+  let rejection_reason = null;
+
+  if (action === 'rejected') {
+    rejection_reason = prompt('Enter rejection reason for the carrier:');
+    if (!rejection_reason) return; // cancelled
+  }
+
+  if (!confirm(`Are you sure you want to ${action} this packet?`)) return;
+
+  try {
+    const response = await authFetch(`${API_URL}/packets/${id}/review`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${currentSession.access_token}`
+      },
+      body: JSON.stringify({ action, rejection_reason })
+    });if (!response) return;
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Review failed');
+    }
+
+    alert(`Packet ${action} successfully! Carrier has been notified by email.`);
+    await loadPackets();
+
+  } catch (error) {
+    console.error('Review error:', error);
+    alert(error.message || 'Failed to review packet');
+  }
+}
+
+function updateStats(packets) {
+            document.getElementById('stat-total').textContent = packets.length;
+            document.getElementById('stat-approved').textContent = packets.filter(p => p.status === 'approved').length;
+            document.getElementById('stat-signed').textContent = packets.filter(p => p.status === 'signed').length;
+            document.getElementById('stat-sent').textContent = packets.filter(p => p.status === 'sent').length;
+        }
+
+function getStatusBadge(status) {
+            const map = {
+                pending: 'pending',
+                sent: 'signed',
+                signed: 'review',
+                approved: 'approved',
+                rejected: 'rejected'
+            };
+            const labels = {
+                pending: 'Pending',
+                sent: 'Sent',
+                signed: 'Signed',
+                approved: 'Approved',
+                rejected: 'Rejected'
+            };
+            return `<span class="status-badge ${map[status] || 'pending'}">${labels[status] || status}</span>`;
+        }
+
+function getActionButtons(packet) {
+            if (packet.status === 'pending') {
+                return `<button class="btn-send-packet" onclick="sendPacket('${packet.id}')">Send →</button>`;
+            } else if (packet.status === 'sent') {
+                return `<span style="font-size:12px; color:var(--light-gray)">Awaiting signature</span>`;
+            } else if (packet.status === 'signed') {
+                return `
+                    <button class="btn-approve" onclick="reviewPacket('${packet.id}', 'approved')">✓ Approve</button>
+                    <button class="btn-reject" onclick="reviewPacket('${packet.id}', 'rejected')">✕ Reject</button>
+                `;
+            } else if (packet.status === 'approved') {
+                return `<span style="font-size:12px; color:var(--success); font-weight:600;">✓ Approved</span>`;
+            } else if (packet.status === 'rejected') {
+                return `<span style="font-size:12px; color:var(--error); font-weight:600;">✕ Rejected</span>`;
+            }
+            return '';
+        }
+
+        // ─── ACTIVITY FEED ───────────────────────────────────────────
+        function updateActivity(packets) {
+            const recent = [...packets]
+                .filter(p => p.signed_at || p.sent_at)
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .slice(0, 5);
+
+            if (recent.length === 0) return;
+
+            const icons = {
+                approved: { icon: '✓', cls: 'approved' },
+                rejected: { icon: '✗', cls: 'rejected' },
+                signed: { icon: '✍️', cls: 'signed' },
+                sent: { icon: '📤', cls: 'pending' },
+                pending: { icon: '🕐', cls: 'pending' }
+            };
+
+            const html = recent.map(p => {
+                const i = icons[p.status] || icons.pending;
+                const date = new Date(p.created_at).toLocaleDateString();
+                return `
+                    <div class="activity-item">
+                        <div class="activity-icon ${i.cls}">${i.icon}</div>
+                        <div class="activity-content">
+                            <p class="activity-text"><strong>${p.carrier_name}</strong> — ${p.status}</p>
+                            <span class="activity-time">${date}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('activity-list').innerHTML = html;
+        }
+
+
+    async function loadPackets() {
+      const loading = document.getElementById('packets-loading');
+      const container = document.getElementById('packets-container');
+
+      loading.classList.add('show');
+
+      try {
+        const response = await authFetch(`${API_URL}/packets`, {
+          headers: {
+            'Authorization': `Bearer ${currentSession.access_token}`
+          }
+        });if (!response) return;
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load packets');
+        }
+
+        const packets = data.packets || [];
+
+        updateStats(packets);
+        updateActivity(packets);
+
+            if (packets.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding:40px 20px; text-align:center;">
+                        <div style="font-size:52px; margin-bottom:16px;">📭</div>
+                        <h3 style="color:var(--white); font-size:18px; font-weight:600; margin-bottom:8px;">No carrier packets yet</h3>
+                        <p style="color:var(--light-gray); font-size:14px; margin-bottom:24px; max-width:360px; margin-left:auto; margin-right:auto; line-height:1.6;">
+                            Get started by filling in the carrier's name and email above, selecting a packet, and clicking <strong style="color:var(--gold);">Send Packet to Carrier</strong>.
+                        </p>
+                        <button onclick="document.getElementById('carrier-name').scrollIntoView({behavior:'smooth'}); document.getElementById('carrier-name').focus();"
+                            style="padding:12px 28px; background:linear-gradient(135deg,var(--gold),var(--gold-light)); color:var(--black); border:none; border-radius:8px; font-weight:700; font-size:14px; cursor:pointer;">
+                            ↑ Send Your First Packet
+                        </button>
+                    </div>`;
+                return;
+            }
+                container.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Carrier</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Signed</th>
+                                <th>Action</th>
+                                <th>Documents</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${packets.map(p => `
+                                <tr class="packet-row">
+                                    <td>
+                                        <div class="carrier-cell">
+                                            <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--black);font-size:14px;flex-shrink:0;">
+                                                ${p.carrier_name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <div class="carrier-name">${p.carrier_name}</div>
+                                                <div class="carrier-email">${p.carrier_email}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>${getStatusBadge(p.status)}</td>
+                                    <td>${new Date(p.created_at).toLocaleDateString()}</td>
+                                    <td>${p.signed_at ? new Date(p.signed_at).toLocaleDateString() : '—'}</td>
+                                    <td>${getActionButtons(p)}</td>
+                                                                    <td>
+    <div style="display:flex; flex-direction:column; gap:4px;">
+        ${p.signed_packet_url
+            ? `<a href="${p.signed_packet_url}" target="_blank" class="view-pdf-link">Signed Packet ↗</a>`
+            : '—'
+        }
+        ${p.mc_certificate_url
+            ? `<a href="${p.mc_certificate_url}" target="_blank" class="view-pdf-link">MC Certificate ↗</a>`
+            : ''
+        }
+        ${p.w9_url
+            ? `<a href="${p.w9_url}" target="_blank" class="view-pdf-link">W9 ↗</a>`
+            : ''
+        }
+        ${p.coi_url
+            ? `<a href="${p.coi_url}" target="_blank" class="view-pdf-link">COI ↗</a>`
+            : ''
+        }
+    </div>
+</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+            } catch (error) {
+                console.error('Load packets error:', error);
+                container.innerHTML = `
+                    <div class="empty-state" style="color:var(--error)">
+                        Failed to load packets: ${error.message}
+                    </div>`;
+            } finally {
+                loading.classList.remove('show');
+            }
+        }
+
+
+        async function verifySession() {
+    const sessionString = localStorage.getItem('session');
+    if (!sessionString) {
+        window.location.href = '/';
+        return false;
+    }
+
+    const session = JSON.parse(sessionString);
+
+    try {
+       const res = await fetch(`${API_URL}/auth/me`, {
+    headers: { 'Authorization': `Bearer ${session.access_token}` }
+});
+
+        if (!res.ok) {
+            // Session expired — clear storage and redirect
+            localStorage.removeItem('session');
+            localStorage.removeItem('user');
+            localStorage.removeItem('broker');
+            alert('Your session has expired. Please log in again.');
+            window.location.href = '/';
+            return false;
+        }
+
+        return true;
+
+    } catch (err) {
+    console.error('Session verification error:', err);
+    // Network error — don't log out, just skip this check
+    return true;
+}
+}
+
+(async () => {
+    await refreshBrokerIfNeeded();
+    if (checkAuth()) {
+        // if (new URLSearchParams(window.location.search).get('payment') === 'success') {
+        //     showAlert('upload-alert', '🎉 Payment successful! Your subscription is now active.', 'success');
+        // }
+        const valid = await verifySession();
+       if (valid) {
+    loadPackets();
+    loadTemplates();
+    setInterval(loadPackets, 30000);
+    setInterval(verifySession, 10 * 60 * 1000);
+}
+    }
+})();
+  </script>
+</body>
+</html>

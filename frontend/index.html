@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="preload" href="styles.css" as="style">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://verifreight-production.up.railway.app">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login -  Verifreight</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+(function() {
+    var retryKey = '_cold_retry';
+    var retries = parseInt(sessionStorage.getItem(retryKey) || '0');
+    if (retries < 2) {
+        window.addEventListener('load', function() {
+            sessionStorage.removeItem(retryKey);
+        });
+        // If the page fails to fully load within 8 seconds, auto-reload
+        var timer = setTimeout(function() {
+            sessionStorage.setItem(retryKey, retries + 1);
+            location.reload();
+        }, 8000);
+        window.addEventListener('load', function() { clearTimeout(timer); });
+    } else {
+        sessionStorage.removeItem(retryKey);
+    }
+})();
+</script>
+</head>
+<body class="auth-page">
+<nav class="navbar" style="position:relative;">
+        <div class="container nav-container">
+            <div class="logo">
+              <a href="./firstpage.html">
+                <span class="logo-text">Verifreight</span>
+                </a>
+              </div>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="./firstpage.html#features" class="nav-link">Features</a></li>
+                <li><a href="./firstpage.html#pricing" class="nav-link">Pricing</a></li>
+                <li><a href="./firstpage.html#about" class="nav-link">About</a></li>
+                <li><a href="./index.html" class="nav-link login-btn">Login</a></li>
+                <li><a href="./index.html" class="nav-link cta-btn">Get Started</a></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="auth-container">
+        <div class="auth-left">
+            <div class="auth-branding">
+                <a href="index.html" class="auth-logo">
+                    <span class="logo-text">Verifreight</span>
+                </a>
+                <h2 class="auth-tagline">From Packet to Approved in Minutes</h2>
+                <div class="auth-features">
+                    <div class="auth-feature">
+                        <div class="feature-check">✓</div>
+                        <p>Digital document management</p>
+                    </div>
+                    <div class="auth-feature">
+                        <div class="feature-check">✓</div>
+                        <p>Instant e-signatures</p>
+                    </div>
+                    <div class="auth-feature">
+                        <div class="feature-check">✓</div>
+                        <p>Real-time tracking</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="auth-right">
+            <div class="auth-form-container">
+              <div id="alert" class="alert" style="display:none; padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 500;"></div>
+                <div id="loading" style="display:none; text-align: center; padding: 10px; margin-bottom: 16px;">
+                    <div style="border: 3px solid rgba(212,175,55,0.2); border-top: 3px solid var(--gold); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 8px;"></div>
+                    <p style="color: var(--light-gray); font-size: 14px;">Processing...</p>
+                </div>
+
+                <div class="auth-tabs">
+                    <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+                    <button class="auth-tab" onclick="switchTab('signup')">Sign Up</button>
+                </div>
+
+                <div class="tab-content active" id="login-form">
+                    <h2 class="auth-title">Welcome Back</h2>
+                    <p class="auth-subtitle">Enter your credentials to access your account</p>
+
+                    <form class="auth-form" onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label for="login-email" class="form-label">Email Address</label>
+                            <div class="input-wrapper">
+                                <input type="email" id="login-email" class="form-input" placeholder="you@example.com" required>
+                                <span class="input-icon">✉️</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="login-password" class="form-label">Password</label>
+                            <div class="input-wrapper">
+                                <input type="password" id="login-password" class="form-input" placeholder="••••••••" required>
+                                <span class="input-icon">🔒</span>
+                            </div>
+                        </div>
+                        <div class="form-options">
+                            <a href="/forgot-password.html" class="forgot-link">Forgot password?</a>
+                        </div>
+
+                        <!-- <div class="form-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>Remember me</span>
+                            </label>
+                            <a href="#" class="forgot-link">Forgot password?</a>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-full">
+                            <span>Sign In</span>
+                            <span class="btn-arrow">→</span>
+                        </button>
+
+                        <div class="auth-divider">
+                            <span>or continue with</span>
+                        </div>
+
+                        <div class="social-login">
+                            <button type="button" class="social-btn">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                </svg>
+                                Google
+                            </button>
+                            <button type="button" class="social-btn">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                </svg>
+                                Facebook
+                            </button>
+                        </div> -->
+                        <button type="submit" id="login-btn" class="btn btn-primary btn-full">
+                            <span>Login to Dashboard</span>
+                            <span class="btn-arrow">→</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="tab-content" id="signup-form">
+                    <h2 class="auth-title">Create Account</h2>
+                    <p class="auth-subtitle">Start managing carrier packets efficiently</p>
+
+                    <form class="auth-form" onsubmit="handleSignup(event)">
+                        
+                            <div class="form-group">
+                                <label for="signup-company" class="form-label">Company Name</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="signup-company" class="form-input" placeholder="Your Company Name" required>
+                                </div>
+                            </div>
+                        
+
+                        <div class="form-group">
+                            <label for="signup-email" class="form-label">Email Address</label>
+                            <div class="input-wrapper">
+                                <input type="email" id="signup-email" class="form-input" placeholder="you@example.com" required>
+                                <span class="input-icon">✉️</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="signup-password" class="form-label">Password</label>
+                            <div class="input-wrapper">
+                                <input type="password" id="signup-password" class="form-input" placeholder="••••••••" required>
+                                <span class="input-icon">🔒</span>
+                            </div>
+                            <div class="password-strength">
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="strength-fill"></div>
+                                </div>
+                                <span class="strength-text">Use 8+ characters with mix of letters & numbers</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-confirm-password" class="form-label">Confirm Password</label>
+                            <div class="input-wrapper">
+                                <input type="password" id="signup-confirm-password" class="form-input" placeholder="Repeat password" required minlength="6">
+                                <span class="input-icon">🔒</span>
+                            </div>
+                        </div>
+
+
+                        <button type="submit" id="signup-btn" class="btn btn-primary btn-full">
+                            <span>Create Account</span>
+                            <span class="btn-arrow">→</span>
+                        </button>
+                    </form>
+                </div>
+
+
+  <script>
+const API_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:3000/api'
+  : '/api'; // ✅
+    if (new URLSearchParams(window.location.search).get('payment') === 'cancelled') {
+        localStorage.removeItem('session');
+        localStorage.removeItem('broker');
+        localStorage.removeItem('user');
+      }
+      
+ 
+
+
+     function switchTab(tab) {
+            // Update tab button states
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(f => f.classList.remove('active'));
+
+            // Find the clicked tab button and activate it
+            document.querySelectorAll('.auth-tab').forEach(t => {
+                if (t.textContent.toLowerCase().includes(tab)) {
+                    t.classList.add('active');
+                }
+            });
+
+            document.getElementById(`${tab}-form`).classList.add('active');
+            hideAlert();
+        }
+
+        // Tab buttons using data-tab or onclick
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabName = this.textContent.trim().toLowerCase();
+                switchTab(tabName === 'login' ? 'login' : 'signup');
+            });
+        });
+
+
+
+
+    function showAlert(message, type) {
+      const alert = document.getElementById('alert');
+      alert.textContent = message;
+      alert.className = `alert ${type}`;
+      alert.style.display = 'block';
+    }
+    // Show success message after payment
+if (new URLSearchParams(window.location.search).get('payment') === 'success') {
+    localStorage.removeItem('session');
+    localStorage.removeItem('broker');
+    localStorage.removeItem('user');
+    showAlert('Payment successful! Please log in to access your dashboard.', 'success');
+}
+
+if (new URLSearchParams(window.location.search).get('session') === 'expired') {
+    showAlert('Your session has expired. Please log in again.', 'error');
+}
+
+    function hideAlert() {
+      const alert = document.getElementById('alert');
+      alert.className = 'alert';
+       alert.style.display = 'none';
+    }
+
+    function showLoading() {
+      document.getElementById('loading').style.display = 'block';
+      // document.getElementById('login-btn').disabled = true;
+      // document.getElementById('signup-btn').disabled = true;
+      const loginBtn = document.getElementById('login-btn');
+            const signupBtn = document.getElementById('signup-btn');
+            if (loginBtn) loginBtn.disabled = true;
+            if (signupBtn) signupBtn.disabled = true;
+    }
+
+    function hideLoading() {
+       document.getElementById('loading').style.display = 'none';
+      // document.getElementById('login-btn').disabled = false;
+      // document.getElementById('signup-btn').disabled = false;
+      const loginBtn = document.getElementById('login-btn');
+            const signupBtn = document.getElementById('signup-btn');
+            if (loginBtn) loginBtn.disabled = false;
+            if (signupBtn) signupBtn.disabled = false;
+    }
+function selectPlan(plan) {
+    localStorage.setItem('selectedPlan', plan);
+    switchTab('signup');
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+  hideAlert();
+
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  showLoading();
+
+  try {
+    const controller = new AbortController();
+const loginTimeout = setTimeout(() => controller.abort(), 15000);
+let response;
+try {
+    response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal
+    });
+} catch (err) {
+    if (err.name === 'AbortError') {
+        throw new Error('Server is waking up — please try again in a few seconds.');
+    }
+    throw err;
+} finally {
+    clearTimeout(loginTimeout);
+}
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Login failed');
+    }
+
+    // Save session & user info
+    localStorage.setItem('session', JSON.stringify(data.session));
+    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('broker', JSON.stringify(data.broker));
+
+    showAlert('Login successful! Redirecting...', 'success');
+
+    // 🔥 Redirect based on role
+   setTimeout(() => {
+  if (data.broker.role === 'super_admin') {
+    window.location.href = '/admin.html';
+  } else if (data.broker.subscription_status === 'active') {
+    window.location.href = '/dashboard.html';
+  } else {
+    // Has account but hasn't paid yet
+    window.location.href = '/pricing.html';
+  }
+}, 1000);
+
+  } catch (error) {
+    console.error('Login error:', error);
+    showAlert(error.message || 'Login failed. Please try again.', 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+
+
+
+
+
+    
+async function handleSignup(event) {
+    event.preventDefault();
+    hideAlert();
+
+    const companyName = document.getElementById('signup-company').value.trim();
+    const email       = document.getElementById('signup-email').value.trim();
+    const password    = document.getElementById('signup-password').value;
+    const confirmPassword = document.getElementById('signup-confirm-password').value;
+    const selectedPlan = localStorage.getItem('selectedPlan') || 'basic';
+
+    if (password !== confirmPassword) {
+        showAlert('Passwords do not match', 'error');
+        return;
+    }
+
+    if (password.length < 6) {
+        showAlert('Password must be at least 6 characters', 'error');
+        return;
+    }
+
+    showLoading();
+
+    try {
+        const response = await fetch(`${API_URL}/auth/signup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, companyName, selectedPlan })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Signup failed');
+        }
+
+        // session can be null if Supabase email confirmation is enabled
+        // Guard every localStorage write
+        if (data.session) {
+            localStorage.setItem('session', JSON.stringify(data.session));
+        }
+        if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+        }
+        if (data.broker) {
+            localStorage.setItem('broker', JSON.stringify(data.broker));
+        }
+
+        // Decide where to send the user
+        const broker = data.broker;
+        const session = data.session;
+
+        // If Supabase requires email confirmation, session will be null
+        if (!session || !session.access_token) {
+            showAlert('Account created! Please check your email to confirm your account, then log in.', 'success');
+            hideLoading();
+            // Switch to login tab so they can sign in after confirming
+            setTimeout(() => switchTab('login'), 2000);
+            return;
+        }
+
+        // Session exists — broker is active, go straight to dashboard
+        if (broker && broker.role === 'super_admin') {
+            showAlert('Account created! Redirecting...', 'success');
+            setTimeout(() => { window.location.href = '/admin.html'; }, 1000);
+        } else if (broker && broker.subscription_status === 'active') {
+            showAlert('Account created! Redirecting to your dashboard...', 'success');
+            setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
+        } else {
+            // Account exists but not active — send to pricing
+            showAlert('Account created! Please choose a plan to continue.', 'success');
+            setTimeout(() => { window.location.href = '/pricing.html'; }, 1000);
+        }
+
+    } catch (error) {
+        console.error('Signup error:', error);
+        showAlert(error.message || 'Signup failed. Please try again.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+    document.getElementById('signup-password').addEventListener('input', function() {
+            const val = this.value;
+            const fill = document.getElementById('strength-fill');
+            if (!fill) return;
+            let strength = 0;
+            if (val.length >= 6) strength += 30;
+            if (val.length >= 10) strength += 20;
+            if (/[A-Z]/.test(val)) strength += 20;
+            if (/[0-9]/.test(val)) strength += 20;
+            if (/[^A-Za-z0-9]/.test(val)) strength += 10;
+            fill.style.width = strength + '%';
+        });
+
+    // if (localStorage.getItem('session')) {
+    //   window.location.href = '/dashboard.html';
+    // }
+    // ─── HAMBURGER ───────────────────────────────────────────────
+// ─── HAMBURGER ───────────────────────────────────────────────
+(function() {
+    const navToggle = document.getElementById('navToggle');
+    const navMenu   = document.getElementById('navMenu');
+    if (!navToggle || !navMenu) return;
+
+    function closeMenu() {
+        navMenu.classList.remove('active');
+        navToggle.querySelectorAll('span').forEach((span, i) => {
+            span.style.transform = 'none';
+            span.style.opacity   = '1';
+        });
+    }
+
+    navToggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = navMenu.classList.toggle('active');
+        const spans  = navToggle.querySelectorAll('span');
+        if (isOpen) {
+            spans[0].style.transform = 'rotate(45deg) translateY(8px)';
+            spans[1].style.opacity   = '0';
+            spans[2].style.transform = 'rotate(-45deg) translateY(-8px)';
+        } else {
+            closeMenu();
+        }
+    });
+
+    navMenu.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', closeMenu);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+            closeMenu();
+        }
+    });
+})();
+
+     
+   const paymentParam = new URLSearchParams(window.location.search).get('payment');
+const sessionParam = new URLSearchParams(window.location.search).get('session');
+if (!paymentParam && !sessionParam) {
+    const existingSession = localStorage.getItem('session');
+    const existingBroker = localStorage.getItem('broker');
+
+    if (existingSession && existingBroker) {
+        try {
+            const broker = JSON.parse(existingBroker);
+            const session = JSON.parse(existingSession);
+            if (session && session.access_token) {
+                if (broker.role === 'super_admin') {
+                    window.location.href = '/admin.html';
+                } else if (broker.subscription_status === 'active') {
+                    window.location.href = '/dashboard.html';
+                } else {
+                    window.location.href = '/pricing.html';
+                }
+            }
+        } catch(e) {
+            localStorage.removeItem('session');
+            localStorage.removeItem('broker');
+            localStorage.removeItem('user');
+        }
+    }
+}
+   </script>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

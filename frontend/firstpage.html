@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="preload" href="styles.css" as="style">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://verifreight-production.up.railway.app">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifreight - From Packet to Approved in Minutes</title>
+    <link rel="stylesheet" href="styles.css">
+<script>
+(function() {
+    var retryKey = '_cold_retry';
+    var retries = parseInt(sessionStorage.getItem(retryKey) || '0');
+    if (retries < 2) {
+        window.addEventListener('load', function() {
+            sessionStorage.removeItem(retryKey);
+        });
+        // If the page fails to fully load within 8 seconds, auto-reload
+        var timer = setTimeout(function() {
+            sessionStorage.setItem(retryKey, retries + 1);
+            location.reload();
+        }, 8000);
+        window.addEventListener('load', function() { clearTimeout(timer); });
+    } else {
+        sessionStorage.removeItem(retryKey);
+    }
+})();
+</script>
+
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="logo">
+                <a href="./firstpage.html">
+                <span class="logo-text">Verifreight</span>
+                    </a>
+            </div>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#pricing" class="nav-link">Pricing</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="./index.html" class="nav-link login-btn">Login</a></li>
+                <li><a href="./index.html" class="nav-link cta-btn">Get Started</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-background"></div>
+        <div class="container hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">
+                    <span class="title-line">Verifreight</span>
+                    <span class="title-accent">From Packet to Approved in Minutes</span>
+                </h1>
+                <p class="hero-description">
+                    The trucking industry runs on paperwork — and that paperwork slows everything down.
+                    We give freight brokers a single platform to send carrier packets, collect signatures,
+                    and approve documents — all without a single phone call or email chain.
+                </p>
+                <div class="hero-buttons">
+                    <a href="./index.html" class="btn btn-primary pulse-btn">Sign Up Free</a>
+                    <a href="#features" class="btn btn-secondary">Learn More</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">10x</span>
+                        <span class="stat-label">Faster Onboarding</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">Digital Process</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">24/7</span>
+                        <span class="stat-label">Cloud Access</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-arrow"></div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Powerful Features</h2>
+                <p class="section-subtitle">Everything you need to manage carrier packets efficiently</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Digital Document Management</h3>
+                    <p class="feature-description">Send, track, and manage all carrier documents from one central platform. No more email chains or lost paperwork.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Instant Approvals</h3>
+                    <p class="feature-description">Review and approve documents in real-time with our streamlined approval workflow. Get notified instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">E-Signatures</h3>
+                    <p class="feature-description">Carriers sign documents digitally from any device. Simple, secure, and legally binding electronic signatures.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Real-Time Tracking</h3>
+                    <p class="feature-description">Know exactly where each packet stands. Track status changes, signatures, and approvals in real-time.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Compliance Tracking</h3>
+                    <p class="feature-description">Every approval and rejection is timestamped and stored securely. Full audit trail for compliance.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Cloud Storage</h3>
+                    <p class="feature-description">All documents stored securely in the cloud. Access from anywhere, anytime, on any device.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2 class="section-title">About Verifreight</h2>
+                    <p class="about-description">
+                        The trucking industry runs on paperwork — and that paperwork slows everything down.
+                        Brokers spend hours chasing carriers for signatures, following up on missing documents,
+                        and manually tracking compliance status across dozens of companies.
+                    </p>
+                    <p class="about-description">
+                        We give freight brokers a single platform to send carrier packets, collect signatures,
+                        and approve or reject documents — all without a single phone call or email chain.
+                        Carriers receive a simple signing link, sign in minutes, and brokers get notified instantly.
+                    </p>
+                    <div class="values-grid">
+                        <div class="value-item">
+                            <div class="value-icon">✓</div>
+                            <h4>For Brokers</h4>
+                            <p>Faster carrier onboarding, cleaner records, and full visibility</p>
+                        </div>
+                        <div class="value-item">
+                            <div class="value-icon">✓</div>
+                            <h4>For Carriers</h4>
+                            <p>Frictionless experience — receive, sign, done</p>
+                        </div>
+                        <div class="value-item">
+                            <div class="value-icon">✓</div>
+                            <h4>For Compliance</h4>
+                            <p>Every action tracked, timestamped, and stored securely</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-image">
+                    <img 
+                        src="https://images.pexels.com/photos/16663684/pexels-photo-16663684.jpeg?auto=compress&cs=tinysrgb&w=800" 
+                        alt="Freight broker managing carrier documents" 
+                        class="about-img"
+                    >
+                </div>
+            </div>
+        </div>
+    </section>
+<section id="pricing" class="pricing">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Simple, Transparent Pricing</h2>
+            <p class="section-subtitle">One plan. Everything included. No surprises.</p>
+        </div>
+        <div class="pricing-grid" style="max-width: 480px; margin: 0 auto;">
+            <div class="pricing-card featured">
+                <div class="popular-badge">Everything Included</div>
+                <div class="pricing-header">
+                    <h3 class="pricing-title">Verifreight Pro</h3>
+                    <div class="pricing-price">
+                        <span class="currency">$</span>
+                        <span class="amount">59</span>
+                        <span class="period">/month</span>
+                    </div>
+                </div>
+                <ul class="pricing-features">
+                    <li>Unlimited carriers</li>
+                    <li>Send carrier packets via secure link</li>
+                    <li>Collect MC Certificate, W9 &amp; COI</li>
+                    <li>Approve / reject documents</li>
+                    <li>Email notifications</li>
+                    <li>Secure document storage</li>
+                    <li>Cancel anytime</li>
+                </ul>
+                <a href="./index.html" class="btn btn-primary btn-full">Get Started — $59/month</a>
+                <p style="text-align:center; color:var(--light-gray); font-size:12px; margin-top:14px;">
+                    Secure payment via Stripe · Cancel anytime
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="testimonials" class="testimonials-section">
+    <div class="container">
+        <div class="section-header text-center">
+            <span class="section-subtitle">Trusted by Freight Brokers</span>
+            <h2 class="section-title">What Our <span class="text-gold">Clients Say</span></h2>
+            <p class="section-description">See how freight brokers are saving hours every week with Verifreight.</p>
+        </div>
+        <div class="testimonials-slider">
+            <div class="testimonial-track">
+
+                <div class="testimonial-card">
+                    <div class="quote-icon">"</div>
+                    <p class="testimonial-text">
+                        Before Verifreight, we were chasing carriers for signatures for days. Now the whole process takes minutes. Our onboarding time dropped by over 80% and our carriers actually appreciate how simple it is.
+                    </p>
+                    <div class="testimonial-author">
+                        <img src="https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=600" alt="James Holloway">
+                        <div>
+                            <h5>James Holloway</h5>
+                            <p>Owner, Holloway Freight Brokerage</p>
+                        </div>
+                    </div>
+                    <div class="testimonial-stars">★★★★★</div>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="quote-icon">"</div>
+                    <p class="testimonial-text">
+                        We manage over 40 carriers and keeping track of who signed what was a nightmare. Verifreight gave us a single dashboard where everything is organized, timestamped, and ready for compliance review at any time.
+                    </p>
+                    <div class="testimonial-author">
+                        <img src="https://images.pexels.com/photos/1065084/pexels-photo-1065084.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Rachel Torres">
+                        <div>
+                            <h5>Rachel Torres</h5>
+                            <p>Operations Manager, Summit Logistics Group</p>
+                        </div>
+                    </div>
+                    <div class="testimonial-stars">★★★★★</div>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="quote-icon">"</div>
+                    <p class="testimonial-text">
+                        The signing link feature is brilliant. I send it to a carrier, they open it on their phone, upload the signed doc, and I get notified immediately. No more back-and-forth emails or missing attachments.
+                    </p>
+                    <div class="testimonial-author">
+                        <img src="https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Marcus Webb">
+                        <div>
+                            <h5>Marcus Webb</h5>
+                            <p>Founder, Webb Transport Solutions</p>
+                        </div>
+                    </div>
+                    <div class="testimonial-stars">★★★★★</div>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="quote-icon">"</div>
+                    <p class="testimonial-text">
+                        Switching to Verifreight was the best operational decision we made this year. Our compliance rate is up, our team is less stressed, and we can onboard new carriers the same day we find them.
+                    </p>
+                    <div class="testimonial-author">
+                        <img src="https://images.pexels.com/photos/1181346/pexels-photo-1181346.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Diana Chen">
+                        <div>
+                            <h5>Diana Chen</h5>
+                            <p>Director, CrossCountry Freight Partners</p>
+                        </div>
+                    </div>
+                    <div class="testimonial-stars">★★★★★</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+
+
+
+    <section class="faq">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Frequently Asked Questions</h2>
+                <p class="section-subtitle">Everything you need to know about Verifreight</p>
+            </div>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h4>How does Verifreight work?</h4>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Verifreight streamlines the carrier onboarding process by providing a digital platform for sending, signing, and approving documents. Brokers send packet links to carriers, who sign digitally, and brokers receive instant notifications for approval.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h4>Is it legally binding?</h4>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes, all electronic signatures collected through Verifreightr are legally binding and compliant with the E-Sign Act and UETA regulations.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h4>How secure is my data?</h4>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>We use bank-level encryption to protect all documents and data. Everything is stored securely in the cloud with automatic backups and full audit trails.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h4>Can I integrate with my existing systems?</h4>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes, our Professional and Enterprise plans include API access for seamless integration with your existing TMS and other business systems.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h4>What kind of support do you offer?</h4>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>All plans include email support. Professional plans get priority support, and Enterprise customers receive dedicated account management and 24/7 phone support.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 class="footer-title"> Verifreight</h3>
+                    <p class="footer-description">From Packet to Approved in Minutes</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-subtitle">Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="./index.html">Login</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-subtitle">Contact</h4>
+                    <ul class="footer-contact">
+                        <li>📍 CA, United States</li>
+                        <li>📞 +1(404)-461-33</li>
+                        <li>✉️ info@Verifreight.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026  Verifreight. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

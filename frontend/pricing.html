@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="preload" href="styles.css" as="style">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://verifreight-production.up.railway.app">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - Verifreight</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+(function() {
+    var retryKey = '_cold_retry';
+    var retries = parseInt(sessionStorage.getItem(retryKey) || '0');
+    if (retries < 2) {
+        window.addEventListener('load', function() {
+            sessionStorage.removeItem(retryKey);
+        });
+        // If the page fails to fully load within 8 seconds, auto-reload
+        var timer = setTimeout(function() {
+            sessionStorage.setItem(retryKey, retries + 1);
+            location.reload();
+        }, 8000);
+        window.addEventListener('load', function() { clearTimeout(timer); });
+    } else {
+        sessionStorage.removeItem(retryKey);
+    }
+})();
+</script>
+</head>
+<body class="auth-page">
+    <div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px;">
+
+        <a href="/" class="logo-text" style="margin-bottom:40px; font-size:28px;">Verifreight</a>
+
+        <div id="payment-cancelled" class="upload-alert error hidden" style="margin-bottom:20px; max-width:500px; width:100%;">
+            Payment was cancelled. You can try again below.
+        </div>
+
+        <div class="pricing-card featured" style="max-width:480px; width:100%;">
+            <div class="popular-badge">Only Plan</div>
+
+            <h2 class="pricing-title">Verifreight Pro</h2>
+            <p style="color:var(--light-gray); margin-bottom:30px; font-size:15px;">
+                Everything you need to manage carrier packets at scale.
+            </p>
+
+            <div class="pricing-price">
+                <span class="currency">$</span>
+                <span class="amount">59</span>
+                <span class="period">/month</span>
+            </div>
+
+            <ul class="pricing-features">
+                <li>Unlimited carriers</li>
+                <li>Send carrier packets via secure link</li>
+                <li>Collect MC Certificate, W9 & COI</li>
+                <li>Approve / reject documents</li>
+                <li>Email notifications</li>
+                <li>Secure document storage</li>
+                <li>Cancel anytime</li>
+            </ul>
+
+           <!-- TEMP: Stripe disabled for testing -->
+                <div style="margin-top:20px; text-align:center;">
+                    <div style="background:var(--gold); color:#000; font-weight:600; font-size:14px; padding:12px 28px; border-radius:6px; opacity:0.7; cursor:default; display:inline-block;">
+                        💳 Payments Coming Soon
+                    </div>
+                    <p style="color:var(--light-gray); font-size:12px; margin-top:10px;">
+                        Full access is currently free during our beta period.
+                    </p>
+                </div>
+                </div>
+        </div>
+
+        <p style="margin-top:24px; color:var(--light-gray); font-size:13px;">
+            Already subscribed? <a href="/" style="color:var(--gold);">Log in</a>
+        </p>
+
+    </div>
+
+    <script>
+const API_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:3000/api'
+  : 'https://chocolate-panther-534690.hostingersite.com/api';
+  // 'https://chocolate-panther-534690.hostingersite.com/api';
+
+        // Show cancelled message if redirected from cancelled payment
+        if (new URLSearchParams(window.location.search).get('payment') === 'cancelled') {
+            document.getElementById('payment-cancelled').classList.remove('hidden');
+        }
+
+        // function showAlert(msg, type) {
+        //     const el = document.getElementById('payment-alert');
+        //     el.textContent = msg;
+        //     el.className = `upload-alert show ${type}`;
+        // }
+
+        // async function handleSubscribe() {
+        //     const btn     = document.getElementById('subscribe-btn');
+        //     const label   = document.getElementById('btn-label');
+        //     const spinner = document.getElementById('btn-spinner');
+
+        //     // Check if logged in
+        //     const sessionString = localStorage.getItem('session');
+        //     if (!sessionString) {
+        //         window.location.href = '/';
+        //         return;
+        //     }
+
+        //     const session = JSON.parse(sessionString);
+
+        //     btn.disabled = true;
+        //     label.textContent = 'Redirecting to payment...';
+        //     spinner.classList.remove('hidden');
+
+        //     try {
+        //         const res  = await fetch(`${API_URL}/payments/create-checkout-session`, {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'Authorization': `Bearer ${session.access_token}`
+        //             }
+        //         });
+
+        //         const data = await res.json();
+
+        //         if (!res.ok) throw new Error(data.error);
+
+        //         // Redirect to Stripe Checkout
+        //         window.location.href = data.url;
+
+        //     } catch (err) {
+        //         showAlert(err.message || 'Failed to start checkout. Please try again.', 'error');
+        //         btn.disabled = false;
+        //         label.textContent = 'Subscribe Now — $59/month';
+        //         spinner.classList.add('hidden');
+        //     }
+        // }
+    </script>
+</body>
+</html>
