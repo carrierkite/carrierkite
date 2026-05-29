@@ -64,7 +64,8 @@ app.use(helmet({
 app.use(compression());
 
 const allowedOrigins = [
-    'https://verifreight-production.up.railway.app'
+    'https://carrierkite.com',
+    'https://www.carrierkite.com',
 ];
 if (process.env.NODE_ENV !== 'production') {
     allowedOrigins.push('http://localhost:3000', 'http://localhost:5500');
@@ -253,7 +254,7 @@ process.on('SIGINT', () => {
     setTimeout(() => process.exit(0), 10000);
 });
 
-const SITE_URL = process.env.APP_URL || 'https://verifreight-production.up.railway.app';
+const SITE_URL = process.env.APP_URL || 'https://carrierkite.com';
 
 // REPLACE WITH THIS:
 setInterval(() => {

@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = 'Verifreight <noreply@carrierkite.com>';
+const FROM = 'CarrierKite <noreply@carrierkite.com>';
 
 async function sendCarrierSigningEmail(carrierEmail, carrierName, packetId, secureToken) {
   const signingUrl = `${process.env.APP_URL}/sign.html?token=${secureToken}`;
@@ -21,7 +21,7 @@ async function sendCarrierSigningEmail(carrierEmail, carrierName, packetId, secu
               <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
                 <tr>
                   <td style="background:#1a1a1a;padding:30px;text-align:center;">
-                    <h1 style="margin:0;color:#d4af37;font-size:24px;font-weight:700;">Verifreight</h1>
+                    <h1 style="margin:0;color:#d4af37;font-size:24px;font-weight:700;">CarrierKite</h1>
                     <p style="margin:8px 0 0;color:#999;font-size:14px;">Carrier Packet Signature Request</p>
                   </td>
                 </tr>
@@ -55,7 +55,7 @@ async function sendCarrierSigningEmail(carrierEmail, carrierName, packetId, secu
                 </tr>
                 <tr>
                   <td style="background:#f8f8f8;padding:20px;text-align:center;border-top:1px solid #eee;">
-                    <p style="margin:0;font-size:12px;color:#999;">This is an automated email from Verifreight. Please do not reply.</p>
+                    <p style="margin:0;font-size:12px;color:#999;">This is an automated email from CarrierKite. Please do not reply.</p>
                   </td>
                 </tr>
               </table>
@@ -81,7 +81,7 @@ async function sendBrokerNotificationEmail(brokerEmail, carrierName, packetId) {
           <tr><td align="center">
             <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
               <tr><td style="background:#1a1a1a;padding:30px;text-align:center;">
-                <h1 style="margin:0;color:#d4af37;font-size:24px;">Verifreight</h1>
+                <h1 style="margin:0;color:#d4af37;font-size:24px;">CarrierKite</h1>
               </td></tr>
               <tr><td style="padding:40px;">
                 <p style="font-size:16px;color:#333;">Good news!</p>
@@ -95,7 +95,7 @@ async function sendBrokerNotificationEmail(brokerEmail, carrierName, packetId) {
                 </p>
               </td></tr>
               <tr><td style="background:#f8f8f8;padding:20px;text-align:center;border-top:1px solid #eee;">
-                <p style="margin:0;font-size:12px;color:#999;">Automated notification from Verifreight.</p>
+                <p style="margin:0;font-size:12px;color:#999;">Automated notification from CarrierKite.</p>
               </td></tr>
             </table>
           </td></tr>
@@ -120,14 +120,14 @@ async function sendReviewEmail(carrierEmail, carrierName, action, rejectionReaso
           <tr><td align="center">
             <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
               <tr><td style="background:#1a1a1a;padding:30px;text-align:center;">
-                <h1 style="margin:0;color:#d4af37;font-size:24px;">Verifreight</h1>
+                <h1 style="margin:0;color:#d4af37;font-size:24px;">CarrierKite</h1>
               </td></tr>
               <tr><td style="padding:40px;">
                 <p style="font-size:16px;color:#333;">Hello <strong>${carrierName}</strong>,</p>
                 <p style="font-size:15px;color:#555;">Your documents have been <strong style="color:#4CAF50;">approved</strong>. You are cleared to proceed!</p>
               </td></tr>
               <tr><td style="background:#f8f8f8;padding:20px;text-align:center;border-top:1px solid #eee;">
-                <p style="margin:0;font-size:12px;color:#999;">Automated email from Verifreight. Please do not reply.</p>
+                <p style="margin:0;font-size:12px;color:#999;">Automated email from CarrierKite. Please do not reply.</p>
               </td></tr>
             </table>
           </td></tr>
@@ -142,7 +142,7 @@ async function sendReviewEmail(carrierEmail, carrierName, action, rejectionReaso
           <tr><td align="center">
             <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
               <tr><td style="background:#1a1a1a;padding:30px;text-align:center;">
-                <h1 style="margin:0;color:#d4af37;font-size:24px;">Verifreight</h1>
+                <h1 style="margin:0;color:#d4af37;font-size:24px;">CarrierKite</h1>
               </td></tr>
               <tr><td style="padding:40px;">
                 <p style="font-size:16px;color:#333;">Hello <strong>${carrierName}</strong>,</p>
@@ -151,7 +151,7 @@ async function sendReviewEmail(carrierEmail, carrierName, action, rejectionReaso
                 <p style="font-size:15px;color:#555;">Please contact your broker for further instructions.</p>
               </td></tr>
               <tr><td style="background:#f8f8f8;padding:20px;text-align:center;border-top:1px solid #eee;">
-                <p style="margin:0;font-size:12px;color:#999;">Automated email from Verifreight. Please do not reply.</p>
+                <p style="margin:0;font-size:12px;color:#999;">Automated email from CarrierKite. Please do not reply.</p>
               </td></tr>
             </table>
           </td></tr>
@@ -166,7 +166,7 @@ async function sendPasswordResetEmail(email, resetUrl) {
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: 'Reset Your Verifreight Password',
+    subject: 'Reset Your CarrierKite Password',
     html: `
       <!DOCTYPE html>
       <html>
@@ -178,7 +178,7 @@ async function sendPasswordResetEmail(email, resetUrl) {
                 <h1 style="margin:0;color:#000;font-size:24px;">Password Reset Request</h1>
               </td></tr>
               <tr><td style="padding:40px;">
-                <p style="font-size:15px;color:#555;">We received a request to reset your Verifreight password.</p>
+                <p style="font-size:15px;color:#555;">We received a request to reset your CarrierKite password.</p>
                 <p style="font-size:15px;color:#555;">Click below to reset it. This link expires in <strong>1 hour</strong>.</p>
                 <p style="text-align:center;">
                   <a href="${resetUrl}"
@@ -190,7 +190,7 @@ async function sendPasswordResetEmail(email, resetUrl) {
                 <p style="font-size:13px;color:#999;"><strong>If you didn't request this, ignore this email.</strong></p>
               </td></tr>
               <tr><td style="background:#f8f8f8;padding:20px;text-align:center;border-top:1px solid #eee;">
-                <p style="margin:0;font-size:12px;color:#999;">Automated email from Verifreight. Do not reply.</p>
+                <p style="margin:0;font-size:12px;color:#999;">Automated email from CarrierKite. Do not reply.</p>
               </td></tr>
             </table>
           </td></tr>
@@ -205,7 +205,7 @@ async function sendVerificationEmail(email, verifyUrl) {
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: 'Verify Your Verifreight Account',
+    subject: 'Verify Your CarrierKite Account',
     html: `
       <!DOCTYPE html>
       <html>
@@ -217,7 +217,7 @@ async function sendVerificationEmail(email, verifyUrl) {
                 <h1 style="margin:0;color:#000;font-size:24px;">Verify Your Email</h1>
               </td></tr>
               <tr><td style="padding:40px;">
-                <p style="font-size:15px;color:#555;">Welcome to Verifreight! Please verify your email to activate your account.</p>
+                <p style="font-size:15px;color:#555;">Welcome to CarrierKite! Please verify your email to activate your account.</p>
                 <p style="text-align:center;">
                   <a href="${verifyUrl}"
                      style="display:inline-block;padding:12px 24px;background:#d4af37;color:#000;text-decoration:none;border-radius:4px;font-weight:bold;">
@@ -227,7 +227,7 @@ async function sendVerificationEmail(email, verifyUrl) {
                 <p style="font-size:13px;color:#777;">This link expires in <strong>24 hours</strong>.</p>
               </td></tr>
               <tr><td style="background:#f8f8f8;padding:20px;text-align:center;border-top:1px solid #eee;">
-                <p style="margin:0;font-size:12px;color:#999;">Automated email from Verifreight. Do not reply.</p>
+                <p style="margin:0;font-size:12px;color:#999;">Automated email from CarrierKite. Do not reply.</p>
               </td></tr>
             </table>
           </td></tr>
