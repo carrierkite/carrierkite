@@ -9,17 +9,19 @@ const { sendBrokerNotificationEmail } = require('../utils/email');
 const storage = multer.memoryStorage();
 
 
-const ALLOWED_MIME_TYPES = ['application/pdf'];
+const ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png'];
 
 const fileFilter = (req, file, cb) => {
   if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-    return cb(new Error(`Invalid file type: ${file.originalname}. Only PDF files are allowed.`), false);
+    return cb(new Error(`Invalid file type: ${file.originalname}. Only PDF, JPG, JPEG, and PNG files are allowed.`), false);
   }
-  // Check file extension as extra layer
+
   const ext = path.extname(file.originalname).toLowerCase();
-  if (ext !== '.pdf') {
-    return cb(new Error(`Invalid file extension: ${file.originalname}. Only .pdf files are accepted.`), false);
+  if (!ALLOWED_EXTENSIONS.includes(ext)) {
+    return cb(new Error(`Invalid file extension: ${file.originalname}. Only .pdf, .jpg, .jpeg, and .png files are accepted.`), false);
   }
+
   cb(null, true);
 };
 
@@ -88,17 +90,22 @@ router.post('/submit', upload.fields([
     if (!mcCert || !w9 || !coi) {
       return res.status(400).json({ error: 'MC Certificate, W9, and COI are required' });
     }
+async function uploadFile(file, folder) {
+  const extFromName = path.extname(file.originalname).toLowerCase();
+  const extFromMime = file.mimetype === 'image/jpeg' ? '.jpg' : file.mimetype === 'image/png' ? '.png' : '.pdf';
+  const ext = ALLOWED_EXTENSIONS.includes(extFromName) ? extFromName : extFromMime;
 
-    async function uploadFile(file, folder) {
-      const fileName = `${folder}/${Date.now()}-${uuidv4()}.pdf`;
-      const { error } = await supabase.storage
-        .from('packets')
-        .upload(fileName, file.buffer, { contentType: 'application/pdf', upsert: false });
-      if (error) throw new Error(`Failed to upload ${folder}: ${error.message}`);
-      const { data: { publicUrl } } = supabase.storage.from('packets').getPublicUrl(fileName);
-      return publicUrl;
-    }
+  const fileName = `${folder}/${Date.now()}-${uuidv4()}${ext}`;
 
+  const { error } = await supabase.storage
+    .from('packets')
+    .upload(fileName, file.buffer, { contentType: file.mimetype, upsert: false });
+
+  if (error) throw new Error(`Failed to upload ${folder}: ${error.message}`);
+
+  const { data: { publicUrl } } = supabase.storage.from('packets').getPublicUrl(fileName);
+  return publicUrl;
+}
     const signedPacketUrl  = signedPdf ? await uploadFile(signedPdf, 'signed') : null;
     const mcCertificateUrl = await uploadFile(mcCert, 'mc-certificates');
     const w9Url            = await uploadFile(w9,     'w9');

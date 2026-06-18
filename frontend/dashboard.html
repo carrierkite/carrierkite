@@ -155,9 +155,10 @@
         <div id="new-upload-area" style="display:none; flex-direction:column; gap:12px;">
             <div class="file-drop-area" onclick="document.getElementById('packet-file').click()">
                 <div style="font-size:28px; margin-bottom:8px;">📎</div>
-                <p>Click to select PDF</p>
-                <small>PDF only · Max 20MB</small>
-                <input type="file" id="packet-file" accept="application/pdf" style="display:none" onchange="updateFileName()">
+                <p>Click to select file</p>
+                <small>PDF, JPG, PNG · Max 20MB</small>
+                <input type="file" id="packet-file" accept="application/pdf,image/jpeg,image/png,.jpg,.jpeg,.png" style="display:none" onchange="updateFileName()">
+
             </div>
             <div id="file-name" class="file-selected-name"></div>
             <div style="display:flex; align-items:center; gap:8px;">
@@ -302,8 +303,7 @@ async function handleSend() {
     if (!carrierName)  return showAlert('upload-alert', 'Please enter carrier name', 'error');
     if (!carrierEmail) return showAlert('upload-alert', 'Please enter carrier email', 'error');
     if (!isNewUpload && !selectedTemplateId) return showAlert('upload-alert', 'Please select a carrier packet or upload a new one', 'error');
-    if (isNewUpload && !packetFile) return showAlert('upload-alert', 'Please select a PDF file to upload', 'error');
-
+    if (isNewUpload && !packetFile) return showAlert('upload-alert', 'Please select a file to upload', 'error');
     const btn   = document.getElementById('send-btn');
     const label = document.getElementById('send-btn-label');
     btn.disabled = true;

@@ -12,12 +12,14 @@ const checkPlan = require('../middleware/checkplan');
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype !== 'application/pdf') {
-    return cb(new Error('Only PDF files are allowed'), false);
+ const allowedMimes = ['application/pdf', 'image/jpeg', 'image/png'];
+  const allowedExts = ['.pdf', '.jpg', '.jpeg', '.png'];
+  if (!allowedMimes.includes(file.mimetype)) {
+    return cb(new Error('Only PDF, JPG, and PNG files are allowed'), false);
   }
   const ext = path.extname(file.originalname).toLowerCase();
-  if (ext !== '.pdf') {
-    return cb(new Error('Only .pdf files are accepted'), false);
+  if (!allowedExts.includes(ext)) {
+    return cb(new Error('Only .pdf, .jpg, .jpeg, .png files are accepted'), false);
   }
   cb(null, true);
 };
@@ -33,7 +35,7 @@ const upload = multer({
 router.post('/upload', auth, upload.single('packet'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No PDF file uploaded' });
+      return res.status(400).json({ error: 'No packet file uploaded' });
     }
 
     const { carrierEmail, carrierName } = req.body;
@@ -42,12 +44,13 @@ router.post('/upload', auth, upload.single('packet'), async (req, res) => {
       return res.status(400).json({ error: 'Carrier email and name are required' });
     }
 
-    const fileName = `${req.user.id}/${Date.now()}-${uuidv4()}.pdf`;
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const fileName = `${req.user.id}/${Date.now()}-${uuidv4()}${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from('packets')
       .upload(fileName, req.file.buffer, {
-        contentType: 'application/pdf',
+        contentType: req.file.mimetype,
         upsert: false
       });
 
@@ -100,10 +103,11 @@ router.post('/templates/save', auth, upload.single('packet'), async (req, res) =
 
     // Either upload a new file or save from existing packet_url
     if (req.file) {
-  const fileName = `${req.user.id}/${Date.now()}-${uuidv4()}.pdf`;
+  const ext = path.extname(req.file.originalname).toLowerCase();
+  const fileName = `${req.user.id}/${Date.now()}-${uuidv4()}${ext}`;
   const { error: uploadError } = await supabase.storage
     .from('packets')
-    .upload(fileName, req.file.buffer, { contentType: 'application/pdf', upsert: false });
+    .upload(fileName, req.file.buffer, { contentType: req.file.mimetype, upsert: false });
   if (uploadError) return res.status(500).json({ error: 'Failed to upload template file' });
   const { data: { publicUrl } } = supabase.storage.from('packets').getPublicUrl(fileName);
   packetUrl = publicUrl;

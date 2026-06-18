@@ -202,12 +202,12 @@
     </div>
     <p class="sign-doc-hint">Upload your Motor Carrier operating authority certificate.</p>
     <div class="file-drop-area" id="drop-zone-mc">
-        <input type="file" id="mc-certificate-file" accept="application/pdf" onchange="onFileChange(this, 'display-mc')">
+        <input type="file" id="mc-certificate-file" accept="application/pdf,image/jpeg,image/png,.jpg,.jpeg,.png" onchange="onFileChange(this, 'display-mc')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="sign-upload-icon">
             <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
         </svg>
         <p class="sign-drop-main">Click to upload or drag &amp; drop</p>
-        <p class="sign-drop-sub">PDF only · Max 20MB</p>
+        <p class="sign-drop-sub">PDF, JPG, PNG · Max 20MB</p>
         <p class="file-selected-name hidden" id="display-mc"></p>
     </div>
 </div>
@@ -220,12 +220,12 @@
     </div>
     <p class="sign-doc-hint">Upload your completed and signed W9 tax form.</p>
     <div class="file-drop-area" id="drop-zone-w9">
-        <input type="file" id="w9-file" accept="application/pdf" onchange="onFileChange(this, 'display-w9')">
+        <input type="file" id="w9-file" accept="application/pdf,image/jpeg,image/png,.jpg,.jpeg,.png" onchange="onFileChange(this, 'display-w9')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="sign-upload-icon">
             <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
         </svg>
         <p class="sign-drop-main">Click to upload or drag &amp; drop</p>
-        <p class="sign-drop-sub">PDF only · Max 20MB</p>
+        <p class="sign-drop-sub">PDF, JPG, PNG · Max 20MB</p>
         <p class="file-selected-name hidden" id="display-w9"></p>
     </div>
 </div>
@@ -238,12 +238,12 @@
     </div>
     <p class="sign-doc-hint">Upload your current Certificate of Insurance.</p>
     <div class="file-drop-area" id="drop-zone-coi">
-        <input type="file" id="coi-file" accept="application/pdf" onchange="onFileChange(this, 'display-coi')">
+        <input type="file" id="coi-file" accept="application/pdf,image/jpeg,image/png,.jpg,.jpeg,.png" onchange="onFileChange(this, 'display-coi')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="sign-upload-icon">
             <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
         </svg>
         <p class="sign-drop-main">Click to upload or drag &amp; drop</p>
-        <p class="sign-drop-sub">PDF only · Max 20MB</p>
+        <p class="sign-drop-sub">PDF, JPG, PNG · Max 20MB</p>
         <p class="file-selected-name hidden" id="display-coi"></p>
     </div>
 </div>
@@ -341,12 +341,12 @@ function setupDropZone(zoneId, inputId, displayId) {
         zone.addEventListener(evt, e => { e.preventDefault(); zone.classList.remove('dragover'); }));
     zone.addEventListener('drop', e => {
         const file = e.dataTransfer.files[0];
-        if (file && file.type === 'application/pdf') {
-            const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files;
-            onFileChange(input, displayId);
-        } else {
-            showAlert('Please drop a valid PDF file.', 'error');
-        }
+       if (file && isAllowedDocumentFile(file)) {
+    const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files;
+    onFileChange(input, displayId);
+} else {
+    showAlert('Please drop a valid PDF, JPG, JPEG, or PNG file.', 'error');
+}
     });
 }
 
@@ -598,10 +598,17 @@ async function downloadPdf() {
 }
 
 // ─── VALIDATE FILE ───────────────────────────────────────────
+function isAllowedDocumentFile(file) {
+    if (!file) return false;
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    const allowedExts  = /\.(pdf|jpg|jpeg|png)$/i;
+    return allowedTypes.includes(file.type) || allowedExts.test(file.name || '');
+}
+
 function validateFile(file, label) {
-    if (!file)                            { showAlert(`Please upload your ${label}.`, 'error'); return false; }
-    if (file.type !== 'application/pdf') { showAlert(`${label} must be a PDF file.`, 'error'); return false; }
-    if (file.size > 20 * 1024 * 1024)   { showAlert(`${label} exceeds the 20MB limit.`, 'error'); return false; }
+    if (!file) { showAlert(`Please upload your ${label}.`, 'error'); return false; }
+    if (!isAllowedDocumentFile(file)) { showAlert(`${label} must be a PDF, JPG, JPEG, or PNG file.`, 'error'); return false; }
+    if (file.size > 20 * 1024 * 1024) { showAlert(`${label} exceeds the 20MB limit.`, 'error'); return false; }
     return true;
 }
 
@@ -620,12 +627,52 @@ async function loadPdfInBackground(packetUrl) {
         </div>`;
 
     try {
-        const pdfUrl = packetUrl.startsWith('http') ? packetUrl : base + packetUrl;
-        const pdfRes = await fetchWithTimeout(pdfUrl, {}, 30000);
-        if (!pdfRes.ok) throw new Error('Could not fetch PDF');
+                const pdfUrl = packetUrl.startsWith('http') ? packetUrl : base + packetUrl;
 
-        const buffer = await pdfRes.arrayBuffer();
-        pdfBytes = buffer.slice(0); // copy for pdf-lib — never share ArrayBuffer
+        const pdfRes = await fetchWithTimeout(pdfUrl + '?t=' + Date.now(), { mode: 'cors' }, 30000);
+if (!pdfRes.ok) throw new Error('Could not fetch PDF');
+
+const buffer = await pdfRes.arrayBuffer();
+
+const contentType = (pdfRes.headers.get('content-type') || '').toLowerCase();
+const cleanUrl = pdfUrl.split('?')[0].toLowerCase();
+const isImage = contentType.startsWith('image/') || /\.(jpg|jpeg|png)$/i.test(cleanUrl);
+        let finalBuffer;
+
+        if (isImage) {
+            if (!window.PDFLib) throw new Error('PDF converter library did not load');
+
+            const { PDFDocument } = PDFLib;
+            const imgPdf = await PDFDocument.create();
+            const imageData = new Uint8Array(buffer);
+
+            const isJpeg = contentType.includes('image/jpeg') || contentType.includes('image/jpg') || /\.(jpg|jpeg)$/i.test(cleanUrl);
+            const isPng  = contentType.includes('image/png')  || /\.png$/i.test(cleanUrl);
+
+            let embeddedImg;
+            if (isJpeg) {
+                embeddedImg = await imgPdf.embedJpg(imageData);
+            } else if (isPng) {
+                embeddedImg = await imgPdf.embedPng(imageData);
+            } else {
+                throw new Error(`Unsupported image type: ${contentType || 'unknown'}`);
+            }
+
+            const maxPageSide = 1600;
+            const ratio = Math.min(1, maxPageSide / Math.max(embeddedImg.width, embeddedImg.height));
+            const pageW = embeddedImg.width * ratio;
+            const pageH = embeddedImg.height * ratio;
+
+            const page = imgPdf.addPage([pageW, pageH]);
+            page.drawImage(embeddedImg, { x: 0, y: 0, width: pageW, height: pageH });
+
+            const imgPdfBytes = await imgPdf.save();
+            finalBuffer = imgPdfBytes.buffer.slice(imgPdfBytes.byteOffset, imgPdfBytes.byteOffset + imgPdfBytes.byteLength);
+        } else {
+            finalBuffer = buffer;
+        }
+
+        pdfBytes = finalBuffer.slice(0);
 
         // Rebuild canvas DOM
         container.innerHTML = `
@@ -634,7 +681,7 @@ async function loadPdfInBackground(packetUrl) {
 
         attachCanvasClickListener();
 
-        pdfDoc = await pdfjsLib.getDocument({ data: buffer }).promise; // pdf.js gets the original
+        pdfDoc = await pdfjsLib.getDocument({ data: finalBuffer }).promise;
         await renderPage(1);
 
         toolbar.style.opacity = '';
