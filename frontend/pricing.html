@@ -63,15 +63,17 @@
                 <li>Cancel anytime</li>
             </ul>
 
-           <!-- TEMP: Stripe disabled for testing -->
-                <div style="margin-top:20px; text-align:center;">
-                    <div style="background:var(--gold); color:#000; font-weight:600; font-size:14px; padding:12px 28px; border-radius:6px; opacity:0.7; cursor:default; display:inline-block;">
-                        💳 Payments Coming Soon
-                    </div>
-                    <p style="color:var(--light-gray); font-size:12px; margin-top:10px;">
-                        Full access is currently free during our beta period.
-                    </p>
-                </div>
+               <div id="payment-alert" class="upload-alert hidden" style="margin-bottom:16px;"></div>
+
+<button id="subscribe-btn" onclick="handleSubscribe()" 
+    style="width:100%; background:var(--gold); color:#000; font-weight:700; font-size:16px; padding:14px 28px; border-radius:8px; border:none; cursor:pointer; margin-top:20px; display:flex; align-items:center; justify-content:center; gap:10px;">
+    <span id="btn-label">Subscribe Now — $59/month</span>
+    <span id="btn-spinner" class="hidden" style="border:2px solid rgba(0,0,0,0.3); border-top:2px solid #000; border-radius:50%; width:16px; height:16px; animation:spin 1s linear infinite;"></span>
+</button>
+
+<p style="color:var(--light-gray); font-size:12px; margin-top:10px; text-align:center;">
+    Secure payment via Stripe · Cancel anytime
+</p>
                 </div>
         </div>
 
@@ -84,7 +86,7 @@
     <script>
 const API_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:3000/api'
-  : 'https://chocolate-panther-534690.hostingersite.com/api';
+  : '/api';
   // 'https://chocolate-panther-534690.hostingersite.com/api';
 
         // Show cancelled message if redirected from cancelled payment
@@ -92,53 +94,54 @@ const API_URL = window.location.hostname === 'localhost'
             document.getElementById('payment-cancelled').classList.remove('hidden');
         }
 
-        // function showAlert(msg, type) {
-        //     const el = document.getElementById('payment-alert');
-        //     el.textContent = msg;
-        //     el.className = `upload-alert show ${type}`;
-        // }
+   function showAlert(msg, type) {
+    const el = document.getElementById('payment-alert');
+    el.textContent = msg;
+    el.className = `upload-alert show ${type}`;
+}
 
-        // async function handleSubscribe() {
-        //     const btn     = document.getElementById('subscribe-btn');
-        //     const label   = document.getElementById('btn-label');
-        //     const spinner = document.getElementById('btn-spinner');
+async function handleSubscribe() {
+    const btn     = document.getElementById('subscribe-btn');
+    const label   = document.getElementById('btn-label');
+    const spinner = document.getElementById('btn-spinner');
 
-        //     // Check if logged in
-        //     const sessionString = localStorage.getItem('session');
-        //     if (!sessionString) {
-        //         window.location.href = '/';
-        //         return;
-        //     }
+    const sessionString = localStorage.getItem('session');
+    if (!sessionString) {
+        window.location.href = '/';
+        return;
+    }
 
-        //     const session = JSON.parse(sessionString);
+    const session = JSON.parse(sessionString);
 
-        //     btn.disabled = true;
-        //     label.textContent = 'Redirecting to payment...';
-        //     spinner.classList.remove('hidden');
+    btn.disabled = true;
+    label.textContent = 'Redirecting to payment...';
+    spinner.classList.remove('hidden');
 
-        //     try {
-        //         const res  = await fetch(`${API_URL}/payments/create-checkout-session`, {
-        //             method: 'POST',
-        //             headers: {
-        //                 'Content-Type': 'application/json',
-        //                 'Authorization': `Bearer ${session.access_token}`
-        //             }
-        //         });
+    try {
+        const res = await fetch(`${API_URL}/payments/create-checkout-session`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
 
-        //         const data = await res.json();
+       const data = await res.json();
+if (!res.ok) throw new Error(data.error || 'Failed to start checkout');
 
-        //         if (!res.ok) throw new Error(data.error);
+if (!data.url) {
+    throw new Error('Stripe did not return a checkout URL. Please contact support.');
+}
 
-        //         // Redirect to Stripe Checkout
-        //         window.location.href = data.url;
+window.location.href = data.url;
 
-        //     } catch (err) {
-        //         showAlert(err.message || 'Failed to start checkout. Please try again.', 'error');
-        //         btn.disabled = false;
-        //         label.textContent = 'Subscribe Now — $59/month';
-        //         spinner.classList.add('hidden');
-        //     }
-        // }
+    } catch (err) {
+        showAlert(err.message || 'Failed to start checkout. Please try again.', 'error');
+        btn.disabled = false;
+        label.textContent = 'Subscribe Now — $59/month';
+        spinner.classList.add('hidden');
+    }
+}
     </script>
 </body>
 </html>

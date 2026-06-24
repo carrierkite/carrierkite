@@ -32,7 +32,8 @@ const upload = multer({
 }
 });
 
-router.post('/upload', auth, upload.single('packet'), async (req, res) => {
+router.post('/upload', auth, checkPlan, upload.single('packet'), async (req, res) => {
+
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No packet file uploaded' });
@@ -93,7 +94,8 @@ router.post('/upload', auth, upload.single('packet'), async (req, res) => {
     return res.status(500).json({ error: 'Failed to upload packet' });
   }
 });
-router.post('/templates/save', auth, upload.single('packet'), async (req, res) => {
+router.post('/templates/save', auth, checkPlan, upload.single('packet'), async (req, res) => {
+
   try {
     const { name } = req.body;
 
@@ -134,7 +136,8 @@ router.post('/templates/save', auth, upload.single('packet'), async (req, res) =
 });
 
 // ── GET ALL TEMPLATES ─────────────────────────────────────────
-router.get('/templates/list', auth, async (req, res) => {
+router.get('/templates/list', auth, checkPlan, async (req, res) => {
+
   try {
     const { data, error } = await supabase
       .from('packet_templates')
@@ -152,7 +155,8 @@ router.get('/templates/list', auth, async (req, res) => {
 });
 
 // ── DELETE TEMPLATE ───────────────────────────────────────────
-router.delete('/templates/:templateId', auth, async (req, res) => {
+router.delete('/templates/:templateId', auth, checkPlan, async (req, res) => {
+
   try {
     const { templateId } = req.params;
 
@@ -183,7 +187,8 @@ return res.status(200).json({ message: 'Template deleted' });
 });
 
 // ── UPLOAD USING TEMPLATE ─────────────────────────────────────
-router.post('/upload-from-template', auth, async (req, res) => {
+router.post('/upload-from-template', auth, checkPlan, async (req, res) => {
+
   try {
     const { carrierEmail, carrierName, templateId } = req.body;
 
@@ -296,7 +301,8 @@ router.post('/:packetId/send', auth, checkPlan, async (req, res) => {
   }
 });
 
-router.patch('/:packetId/review', auth, async (req, res) => {
+router.patch('/:packetId/review', auth, checkPlan, async (req, res) => {
+
   try {
     const { packetId } = req.params;
     const { action, rejection_reason } = req.body; // action = 'approved' or 'rejected'
@@ -355,7 +361,8 @@ return res.status(200).json({ success: true, status: action });
 });
 
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, checkPlan, async (req, res) => {
+
   try {
     const { data: packets, error } = await supabase
       .from('packets')
@@ -378,7 +385,8 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-router.get('/:packetId', auth, async (req, res) => {
+router.get('/:packetId', auth, checkPlan, async (req, res) => {
+
   try {
     const { packetId } = req.params;
 

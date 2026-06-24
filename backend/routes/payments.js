@@ -4,9 +4,6 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const supabase = require('../config/supabase');
 
 // TEMP: Payments disabled for testing
-router.all('*', (req, res) => {
-  res.status(503).json({ error: 'Payments not available yet.' });
-});
 module.exports = router;
 
 // ── CREATE CHECKOUT SESSION ──────────────────────────────────

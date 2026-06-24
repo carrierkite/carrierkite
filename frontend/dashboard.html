@@ -474,9 +474,26 @@ async function refreshBrokerIfNeeded() {
         return false;
       }
 
-      currentSession = JSON.parse(session);
-      currentBroker = JSON.parse(broker);
-      const name = currentBroker.company_name || 'Broker';
+currentSession = JSON.parse(session);
+currentBroker = JSON.parse(broker);
+
+if (currentBroker.role !== 'super_admin') {
+  if (currentBroker.subscription_status !== 'active') {
+    window.location.href = '/pricing.html';
+    return false;
+  }
+
+  if (currentBroker.is_active !== true) {
+    localStorage.removeItem('session');
+    localStorage.removeItem('user');
+    localStorage.removeItem('broker');
+    alert('Your account is not active. Please contact support.');
+    window.location.href = '/';
+    return false;
+  }
+}
+
+const name = currentBroker.company_name || 'Broker';
       document.getElementById('broker-name').textContent = name;
             document.getElementById('user-name-display').textContent = name;
             document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();

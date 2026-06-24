@@ -7,7 +7,9 @@ const REQUIRED_ENV = [
     'VITE_SUPABASE_URL',
     'SUPABASE_SERVICE_ROLE_KEY',
     'APP_URL',
-    // 'STRIPE_SECRET_KEY', commented out for testing without payments
+    'STRIPE_SECRET_KEY',
+    'STRIPE_PRICE_ID',
+    'STRIPE_WEBHOOK_SECRET',
 ];
 const missingEnv = REQUIRED_ENV.filter(k => !process.env[k]);
 if (missingEnv.length) {
@@ -79,6 +81,7 @@ app.use(cors({
     },
     credentials: true
 }));
+
 // Stripe webhook needs raw body — must be before express.json()
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
@@ -256,8 +259,9 @@ process.on('SIGINT', () => {
 
 const SITE_URL = process.env.APP_URL || 'https://carrierkite.com';
 
-// REPLACE WITH THIS:
 setInterval(() => {
+    // Skip keep-alive ping in local development
+    if (SITE_URL.startsWith('http://')) return;
     https.get(`${SITE_URL}/api/auth/ping`, (res) => {
         console.log(`Keep-alive ping: ${res.statusCode}`);
     }).on('error', (err) => {

@@ -250,12 +250,10 @@ const API_URL = window.location.hostname === 'localhost'
       alert.className = `alert ${type}`;
       alert.style.display = 'block';
     }
-    // Show success message after payment
+   // If payment success ever lands on index by mistake, send user to dashboard.
+// Do NOT clear localStorage here.
 if (new URLSearchParams(window.location.search).get('payment') === 'success') {
-    localStorage.removeItem('session');
-    localStorage.removeItem('broker');
-    localStorage.removeItem('user');
-    showAlert('Payment successful! Please log in to access your dashboard.', 'success');
+    window.location.href = '/dashboard.html?payment=success';
 }
 
 if (new URLSearchParams(window.location.search).get('session') === 'expired') {

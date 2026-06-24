@@ -43,10 +43,8 @@ router.post('/signup', async (req, res) => {
         email: email,
         company_name: companyName,
         subscription_plan: plan,
-        // subscription_status: 'inactive',  // inactive until payment
-        // is_active: false                   // blocked until payment
-        subscription_status: 'active',  // TEMP: auto-activate for testing
-        is_active: true 
+subscription_status: 'inactive',
+is_active: false
       }]);
 
     if (profileError) {
@@ -70,7 +68,8 @@ router.post('/signup', async (req, res) => {
       },
       broker: newBroker,
       session: authData.session,
-      requiresPayment: false
+      requiresPayment: true
+
     });
 
   } catch (error) {
@@ -125,15 +124,18 @@ router.post('/login', async (req, res) => {
 //   return res.status(403).json({ error: 'Your account has been disabled. Please contact support.' });
 // }
     
-    return res.status(200).json({
-      message: 'Login successful',
-      user: {
-        id: data.user.id,
-        email: data.user.email
-      },
-      broker: broker,
-      session: data.session
-    });
+    const requiresPayment = broker.role !== 'super_admin' && broker.subscription_status !== 'active';
+
+return res.status(200).json({
+  message: 'Login successful',
+  user: {
+    id: data.user.id,
+    email: data.user.email
+  },
+  broker: broker,
+  session: data.session,
+  requiresPayment
+});
 
   } catch (error) {
     console.error('Login error:', error);
