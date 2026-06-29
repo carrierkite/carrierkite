@@ -5,12 +5,103 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM = 'CarrierKite <noreply@carrierkite.com>';
 
-async function sendCarrierSigningEmail(carrierEmail, carrierName, packetId, secureToken) {
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// async function sendCarrierSigningEmail(carrierEmail, carrierName, packetId, secureToken) {
+//   const signingUrl = `${process.env.APP_URL}/sign.html?token=${secureToken}`;
+//   await resend.emails.send({
+//     from: FROM,
+//     to: carrierEmail,
+//     subject: 'Carrier Packet - Signature Required',
+//     html: `
+//       <!DOCTYPE html>
+//       <html>
+//       <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
+//         <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+//           <tr>
+//             <td align="center">
+//               <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+//                 <tr>
+//                   <td style="background:#1a1a1a;padding:30px;text-align:center;">
+//                     <h1 style="margin:0;color:#d4af37;font-size:24px;font-weight:700;">CarrierKite</h1>
+//                     <p style="margin:8px 0 0;color:#999;font-size:14px;">Carrier Packet Signature Request</p>
+//                   </td>
+//                 </tr>
+//                 <tr>
+//                   <td style="padding:40px 40px 20px;">
+//                     <p style="margin:0 0 16px;font-size:16px;color:#333;">Hello <strong>${carrierName}</strong>,</p>
+//                     <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.6;">
+//                       You have received a carrier packet that requires your signature and documents.
+//                     </p>
+//                     <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6;">
+//                       Please click the button below to review and submit your documents:
+//                     </p>
+//                     <table cellpadding="0" cellspacing="0" width="100%">
+//                       <tr>
+//                         <td align="center" style="padding:10px 0 30px;">
+//                           <a href="${signingUrl}"
+//                              style="display:inline-block;padding:16px 40px;background-color:#4CAF50;color:#ffffff;text-decoration:none;border-radius:6px;font-size:16px;font-weight:700;">
+//                             View and Sign Packet
+//                           </a>
+//                         </td>
+//                       </tr>
+//                     </table>
+//                     <p style="margin:0 0 8px;font-size:14px;color:#777;">Or copy and paste this link:</p>
+//                     <p style="margin:0 0 24px;font-size:13px;color:#555;word-break:break-all;background:#f8f8f8;padding:12px;border:1px solid #e0e0e0;border-radius:4px;">
+//                       ${signingUrl}
+//                     </p>
+//                     <p style="margin:0;font-size:13px;color:#999;border-top:1px solid #eee;padding-top:20px;">
+//                       <strong style="color:#555;">Important:</strong> This link is unique to you and should not be shared.
+//                     </p>
+//                   </td>
+//                 </tr>
+//                 <tr>
+//                   <td style="background:#f8f8f8;padding:20px;text-align:center;border-top:1px solid #eee;">
+//                     <p style="margin:0;font-size:12px;color:#999;">This is an automated email from CarrierKite. Please do not reply.</p>
+//                   </td>
+//                 </tr>
+//               </table>
+//             </td>
+//           </tr>
+//         </table>
+//       </body>
+//       </html>
+//     `
+//   });
+// }
+
+async function sendCarrierSigningEmail(carrierEmail, carrierName, packetId, secureToken, brokerDetails = {}) {
   const signingUrl = `${process.env.APP_URL}/sign.html?token=${secureToken}`;
+
+  const safeCarrierName = escapeHtml(carrierName);
+  const brokerCompany = escapeHtml(
+    brokerDetails.companyName ||
+    brokerDetails.company_name ||
+    'your broker'
+  );
+  const brokerEmail = escapeHtml(
+    brokerDetails.email ||
+    brokerDetails.brokerEmail ||
+    ''
+  );
+
+  const subjectCompany = brokerDetails.companyName || brokerDetails.company_name || 'Your Broker';
+
   await resend.emails.send({
     from: FROM,
     to: carrierEmail,
-    subject: 'Carrier Packet - Signature Required',
+
+    // If the carrier replies, it goes to the broker directly.
+    ...(brokerEmail ? { reply_to: brokerEmail } : {}),
+
+    subject: `Action Required: Carrier packet from ${subjectCompany}`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -19,21 +110,58 @@ async function sendCarrierSigningEmail(carrierEmail, carrierName, packetId, secu
           <tr>
             <td align="center">
               <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                
                 <tr>
                   <td style="background:#1a1a1a;padding:30px;text-align:center;">
                     <h1 style="margin:0;color:#d4af37;font-size:24px;font-weight:700;">CarrierKite</h1>
                     <p style="margin:8px 0 0;color:#999;font-size:14px;">Carrier Packet Signature Request</p>
                   </td>
                 </tr>
+
                 <tr>
                   <td style="padding:40px 40px 20px;">
-                    <p style="margin:0 0 16px;font-size:16px;color:#333;">Hello <strong>${carrierName}</strong>,</p>
+                    <p style="margin:0 0 16px;font-size:16px;color:#333;">
+                      Hello <strong>${safeCarrierName}</strong>,
+                    </p>
+
                     <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.6;">
-                      You have received a carrier packet that requires your signature and documents.
+                      You have received a carrier packet from 
+                      <strong style="color:#333;">${brokerCompany}</strong>
+                      that requires your signature and documents.
                     </p>
+
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0;background:#f9f7ef;border:1px solid #eadca8;border-radius:8px;">
+                      <tr>
+                        <td style="padding:18px;">
+                          <p style="margin:0 0 10px;font-size:15px;color:#333;font-weight:700;">
+                            Broker Details
+                          </p>
+
+                          <p style="margin:0 0 6px;font-size:14px;color:#555;line-height:1.5;">
+                            <strong>Company:</strong> ${brokerCompany}
+                          </p>
+
+                          ${brokerEmail ? `
+                          <p style="margin:0;font-size:14px;color:#555;line-height:1.5;">
+                            <strong>Email:</strong>
+                            <a href="mailto:${brokerEmail}" style="color:#b8941f;text-decoration:none;">
+                              ${brokerEmail}
+                            </a>
+                          </p>
+                          ` : ''}
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.6;">
+                      Please click the button below to review the packet and submit your documents.
+                    </p>
+
                     <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6;">
-                      Please click the button below to review and submit your documents:
+                      If you have any questions, notice incorrect information, or need further assistance,
+                      please contact <strong>${brokerCompany}</strong>${brokerEmail ? ` directly at <a href="mailto:${brokerEmail}" style="color:#b8941f;text-decoration:none;">${brokerEmail}</a>` : ' directly'}.
                     </p>
+
                     <table cellpadding="0" cellspacing="0" width="100%">
                       <tr>
                         <td align="center" style="padding:10px 0 30px;">
@@ -44,20 +172,33 @@ async function sendCarrierSigningEmail(carrierEmail, carrierName, packetId, secu
                         </td>
                       </tr>
                     </table>
+
                     <p style="margin:0 0 8px;font-size:14px;color:#777;">Or copy and paste this link:</p>
+
                     <p style="margin:0 0 24px;font-size:13px;color:#555;word-break:break-all;background:#f8f8f8;padding:12px;border:1px solid #e0e0e0;border-radius:4px;">
                       ${signingUrl}
                     </p>
-                    <p style="margin:0;font-size:13px;color:#999;border-top:1px solid #eee;padding-top:20px;">
-                      <strong style="color:#555;">Important:</strong> This link is unique to you and should not be shared.
+
+                    <p style="margin:0;font-size:13px;color:#999;border-top:1px solid #eee;padding-top:20px;line-height:1.6;">
+                      <strong style="color:#555;">Important:</strong>
+                      This link is unique to you and should not be shared.
+                      CarrierKite is the secure software platform used to deliver and collect this packet.
+                      For packet-specific questions, contact your broker directly.
                     </p>
                   </td>
                 </tr>
+
                 <tr>
                   <td style="background:#f8f8f8;padding:20px;text-align:center;border-top:1px solid #eee;">
-                    <p style="margin:0;font-size:12px;color:#999;">This is an automated email from CarrierKite. Please do not reply.</p>
+                    <p style="margin:0 0 6px;font-size:12px;color:#777;">
+                      Sent on behalf of <strong>${brokerCompany}</strong>${brokerEmail ? ` · ${brokerEmail}` : ''}
+                    </p>
+                    <p style="margin:0;font-size:12px;color:#999;">
+                      Automated email from CarrierKite. Replies may be directed to your broker.
+                    </p>
                   </td>
                 </tr>
+
               </table>
             </td>
           </tr>

@@ -283,11 +283,21 @@ router.post('/:packetId/send', auth, checkPlan, async (req, res) => {
       });
     }
 
+      const { data: broker } = await supabase
+      .from('brokers')
+      .select('company_name, email')
+      .eq('id', req.user.id)
+      .maybeSingle();
+
     await sendCarrierSigningEmail(
       packet.carrier_email,
       packet.carrier_name,
       packet.id,
-      packet.secure_token
+      packet.secure_token,
+      {
+        companyName: broker?.company_name || 'your broker',
+        email: broker?.email || ''
+      }
     );
 
     return res.status(200).json({
