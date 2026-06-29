@@ -4308,3 +4308,60 @@ select.form-input option {
         font-size: 22px !important;
     }
 }
+
+/* ===== Dashboard Search / Filter / Company Settings ===== */
+
+.packets-header-enhanced {
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.packet-filters {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-end;
+}
+
+.packet-search-input {
+    max-width: 280px;
+    min-width: 220px;
+}
+
+.packet-status-filter {
+    max-width: 170px;
+    min-width: 150px;
+}
+
+.company-settings-card {
+    margin-bottom: 30px;
+}
+
+.company-settings-card .form-group {
+    margin-bottom: 16px;
+}
+
+.company-settings-card .btn-full {
+    width: 100%;
+    justify-content: center;
+}
+
+@media (max-width: 900px) {
+    .packets-header-enhanced {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .packet-filters {
+        justify-content: stretch;
+    }
+
+    .packet-search-input,
+    .packet-status-filter {
+        max-width: 100%;
+        width: 100%;
+        min-width: 0;
+    }
+}

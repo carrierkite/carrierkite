@@ -162,10 +162,32 @@
 
                     <!-- PACKETS TABLE CARD -->
                     <div class="card" id="packets-section">
-                        <div class="card-header">
-                            <h3 class="card-title">My Carrier Packets</h3>
-                        </div>
+                        <div class="card-header packets-header-enhanced">
+    <h3 class="card-title">My Carrier Packets</h3>
 
+    <div class="packet-filters">
+        <input 
+            type="text" 
+            id="packet-search" 
+            class="form-input packet-search-input" 
+            placeholder="Search carrier name or email..."
+            oninput="applyPacketFilters()"
+        >
+
+        <select 
+            id="packet-status-filter" 
+            class="form-input packet-status-filter"
+            onchange="applyPacketFilters()"
+        >
+            <option value="all">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="sent">Sent</option>
+            <option value="signed">Signed</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+        </select>
+    </div>
+</div>
                         <div id="packets-loading" class="packets-loading">
                             <div class="spinner-inline"></div>
                             Loading packets...
@@ -191,8 +213,46 @@
                         </div>
                     </div>
 
-                    <!-- QUICK ACTIONS -->
-                    <div class="card quick-actions">
+                   <!-- COMPANY SETTINGS -->
+<div class="card company-settings-card">
+    <div class="card-header">
+        <h3 class="card-title">Company Settings</h3>
+    </div>
+
+    <div id="profile-alert" class="upload-alert"></div>
+
+    <div class="form-group">
+        <label class="form-label">Company Name</label>
+        <input 
+            type="text" 
+            id="profile-company-name" 
+            class="form-input" 
+            placeholder="Your company name"
+        >
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Account Email</label>
+        <input 
+            type="email" 
+            id="profile-email" 
+            class="form-input" 
+            readonly
+            style="opacity:0.75; cursor:not-allowed;"
+        >
+        <small style="display:block; margin-top:6px; color:var(--light-gray); font-size:12px;">
+            This email is used for login and broker contact details.
+        </small>
+    </div>
+
+    <button 
+        class="btn btn-primary btn-full" 
+        id="save-profile-btn"
+        onclick="saveBrokerProfile()"
+    >
+        Save Company Settings
+    </button>
+</div>
                         <h3 class="card-title" style="margin-bottom:20px;">Quick Actions</h3>
                         <div class="quick-action-buttons">
                             <button class="quick-btn" onclick="document.getElementById('carrier-name').scrollIntoView({behavior:'smooth'}); document.getElementById('carrier-name').focus();">
@@ -242,7 +302,187 @@ const API_URL = window.location.hostname === 'localhost'
 let currentSession = null;
 let currentBroker = null;
 let selectedTemplateId = null;
+let allPackets = [];
 
+
+function escapeHTML(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function applyPacketFilters() {
+    const searchEl = document.getElementById('packet-search');
+    const statusEl = document.getElementById('packet-status-filter');
+
+    const search = searchEl ? searchEl.value.trim().toLowerCase() : '';
+    const status = statusEl ? statusEl.value : 'all';
+
+    let filtered = [...allPackets];
+
+    if (status !== 'all') {
+        filtered = filtered.filter(p => p.status === status);
+    }
+
+    if (search) {
+        filtered = filtered.filter(p => {
+            const name = String(p.carrier_name || '').toLowerCase();
+            const email = String(p.carrier_email || '').toLowerCase();
+            return name.includes(search) || email.includes(search);
+        });
+    }
+
+    renderPackets(filtered);
+}
+
+function renderPackets(packets) {
+    const container = document.getElementById('packets-container');
+
+    if (!packets || packets.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="padding:40px 20px; text-align:center;">
+                <div style="font-size:52px; margin-bottom:16px;">📭</div>
+                <h3 style="color:var(--white); font-size:18px; font-weight:600; margin-bottom:8px;">No packets found</h3>
+                <p style="color:var(--light-gray); font-size:14px; margin-bottom:24px; max-width:360px; margin-left:auto; margin-right:auto; line-height:1.6;">
+                    Try changing the search or status filter.
+                </p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Carrier</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Signed</th>
+                    <th>Action</th>
+                    <th>Documents</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${packets.map(p => {
+                    const carrierName = escapeHTML(p.carrier_name);
+                    const carrierEmail = escapeHTML(p.carrier_email);
+                    const firstLetter = carrierName ? carrierName.charAt(0).toUpperCase() : '?';
+
+                    return `
+                        <tr class="packet-row">
+                            <td>
+                                <div class="carrier-cell">
+                                    <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--black);font-size:14px;flex-shrink:0;">
+                                        ${firstLetter}
+                                    </div>
+                                    <div>
+                                        <div class="carrier-name">${carrierName}</div>
+                                        <div class="carrier-email">${carrierEmail}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${getStatusBadge(p.status)}</td>
+                            <td>${p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}</td>
+                            <td>${p.signed_at ? new Date(p.signed_at).toLocaleDateString() : '—'}</td>
+                            <td>${getActionButtons(p)}</td>
+                            <td>
+                                <div style="display:flex; flex-direction:column; gap:4px;">
+                                    ${p.signed_packet_url
+                                        ? `<a href="${p.signed_packet_url}" target="_blank" class="view-pdf-link">Signed Packet ↗</a>`
+                                        : '—'
+                                    }
+                                    ${p.mc_certificate_url
+                                        ? `<a href="${p.mc_certificate_url}" target="_blank" class="view-pdf-link">MC Certificate ↗</a>`
+                                        : ''
+                                    }
+                                    ${p.w9_url
+                                        ? `<a href="${p.w9_url}" target="_blank" class="view-pdf-link">W9 ↗</a>`
+                                        : ''
+                                    }
+                                    ${p.coi_url
+                                        ? `<a href="${p.coi_url}" target="_blank" class="view-pdf-link">COI ↗</a>`
+                                        : ''
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function populateProfileSettings() {
+    if (!currentBroker) return;
+
+    const companyInput = document.getElementById('profile-company-name');
+    const emailInput = document.getElementById('profile-email');
+
+    if (companyInput) {
+        companyInput.value = currentBroker.company_name || '';
+    }
+
+    if (emailInput) {
+        emailInput.value = currentBroker.email || '';
+    }
+}
+
+async function saveBrokerProfile() {
+    hideAlert('profile-alert');
+
+    const companyInput = document.getElementById('profile-company-name');
+    const btn = document.getElementById('save-profile-btn');
+
+    const companyName = companyInput.value.trim();
+
+    if (!companyName) {
+        return showAlert('profile-alert', 'Company name is required', 'error');
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+        const res = await authFetch(`${API_URL}/auth/profile`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentSession.access_token}`
+            },
+            body: JSON.stringify({ companyName })
+        });
+
+        if (!res) return;
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.error || 'Failed to update profile');
+        }
+
+        currentBroker = data.broker;
+        localStorage.setItem('broker', JSON.stringify(data.broker));
+
+        const name = currentBroker.company_name || 'Broker';
+
+        document.getElementById('broker-name').textContent = name;
+        document.getElementById('user-name-display').textContent = name;
+        document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+
+        showAlert('profile-alert', 'Company settings saved successfully', 'success');
+
+    } catch (err) {
+        console.error('Save profile error:', err);
+        showAlert('profile-alert', err.message || 'Failed to save company settings', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Company Settings';
+    }
+}
 function updateFileName() {
     const input = document.getElementById('packet-file');
     const el = document.getElementById('file-name');
@@ -475,11 +715,14 @@ if (currentBroker.role !== 'super_admin') {
 }
 
 const name = currentBroker.company_name || 'Broker';
-      document.getElementById('broker-name').textContent = name;
-            document.getElementById('user-name-display').textContent = name;
-            document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
 
-      return true;
+document.getElementById('broker-name').textContent = name;
+document.getElementById('user-name-display').textContent = name;
+document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+
+populateProfileSettings();
+
+return true;
     }
 
     function handleLogout() {
@@ -666,83 +909,31 @@ function getActionButtons(packet) {
           throw new Error(data.error || 'Failed to load packets');
         }
 
-        const packets = data.packets || [];
+const packets = data.packets || [];
 
-        updateStats(packets);
-        updateActivity(packets);
+allPackets = packets;
 
-            if (packets.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state" style="padding:40px 20px; text-align:center;">
-                        <div style="font-size:52px; margin-bottom:16px;">📭</div>
-                        <h3 style="color:var(--white); font-size:18px; font-weight:600; margin-bottom:8px;">No carrier packets yet</h3>
-                        <p style="color:var(--light-gray); font-size:14px; margin-bottom:24px; max-width:360px; margin-left:auto; margin-right:auto; line-height:1.6;">
-                            Get started by filling in the carrier's name and email above, selecting a packet, and clicking <strong style="color:var(--gold);">Send Packet to Carrier</strong>.
-                        </p>
-                        <button onclick="document.getElementById('carrier-name').scrollIntoView({behavior:'smooth'}); document.getElementById('carrier-name').focus();"
-                            style="padding:12px 28px; background:linear-gradient(135deg,var(--gold),var(--gold-light)); color:var(--black); border:none; border-radius:8px; font-weight:700; font-size:14px; cursor:pointer;">
-                            ↑ Send Your First Packet
-                        </button>
-                    </div>`;
-                return;
-            }
-                container.innerHTML = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Carrier</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Signed</th>
-                                <th>Action</th>
-                                <th>Documents</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${packets.map(p => `
-                                <tr class="packet-row">
-                                    <td>
-                                        <div class="carrier-cell">
-                                            <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--black);font-size:14px;flex-shrink:0;">
-                                                ${p.carrier_name.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <div class="carrier-name">${p.carrier_name}</div>
-                                                <div class="carrier-email">${p.carrier_email}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>${getStatusBadge(p.status)}</td>
-                                    <td>${new Date(p.created_at).toLocaleDateString()}</td>
-                                    <td>${p.signed_at ? new Date(p.signed_at).toLocaleDateString() : '—'}</td>
-                                    <td>${getActionButtons(p)}</td>
-                                                                    <td>
-    <div style="display:flex; flex-direction:column; gap:4px;">
-        ${p.signed_packet_url
-            ? `<a href="${p.signed_packet_url}" target="_blank" class="view-pdf-link">Signed Packet ↗</a>`
-            : '—'
-        }
-        ${p.mc_certificate_url
-            ? `<a href="${p.mc_certificate_url}" target="_blank" class="view-pdf-link">MC Certificate ↗</a>`
-            : ''
-        }
-        ${p.w9_url
-            ? `<a href="${p.w9_url}" target="_blank" class="view-pdf-link">W9 ↗</a>`
-            : ''
-        }
-        ${p.coi_url
-            ? `<a href="${p.coi_url}" target="_blank" class="view-pdf-link">COI ↗</a>`
-            : ''
-        }
-    </div>
-</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
+updateStats(packets);
+updateActivity(packets);
 
-            } catch (error) {
+if (packets.length === 0) {
+    container.innerHTML = `
+        <div class="empty-state" style="padding:40px 20px; text-align:center;">
+            <div style="font-size:52px; margin-bottom:16px;">📭</div>
+            <h3 style="color:var(--white); font-size:18px; font-weight:600; margin-bottom:8px;">No carrier packets yet</h3>
+            <p style="color:var(--light-gray); font-size:14px; margin-bottom:24px; max-width:360px; margin-left:auto; margin-right:auto; line-height:1.6;">
+                Get started by filling in the carrier's name and email above, selecting a packet, and clicking <strong style="color:var(--gold);">Send Packet to Carrier</strong>.
+            </p>
+            <button onclick="document.getElementById('carrier-name').scrollIntoView({behavior:'smooth'}); document.getElementById('carrier-name').focus();"
+                style="padding:12px 28px; background:linear-gradient(135deg,var(--gold),var(--gold-light)); color:var(--black); border:none; border-radius:8px; font-weight:700; font-size:14px; cursor:pointer;">
+                ↑ Send Your First Packet
+            </button>
+        </div>`;
+    return;
+}
+
+applyPacketFilters();
+    } catch (error) {
                 console.error('Load packets error:', error);
                 container.innerHTML = `
                     <div class="empty-state" style="color:var(--error)">

@@ -306,6 +306,48 @@ router.get('/verify-session', async (req, res) => {
   }
 });
 
+router.patch('/profile', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: 'Unauthorized' });
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error } = await supabaseAuth.auth.getUser(token);
+
+    if (error || !userData.user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const { companyName } = req.body;
+
+    if (!companyName || !companyName.trim()) {
+      return res.status(400).json({ error: 'Company name is required' });
+    }
+
+    const { data: broker, error: updateError } = await supabase
+      .from('brokers')
+      .update({
+        company_name: companyName.trim()
+      })
+      .eq('id', userData.user.id)
+      .select('*')
+      .maybeSingle();
+
+    if (updateError) {
+      console.error('Profile update error:', updateError);
+      return res.status(500).json({ error: 'Failed to update profile' });
+    }
+
+    return res.status(200).json({
+      message: 'Profile updated successfully',
+      broker
+    });
+
+  } catch (err) {
+    console.error('Profile update error:', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
 
 router.get('/me', async (req, res) => {
   try {
