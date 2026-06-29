@@ -191,10 +191,11 @@ const API_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:3000/api'
   : '/api'; // ✅
     if (new URLSearchParams(window.location.search).get('payment') === 'cancelled') {
-        localStorage.removeItem('session');
-        localStorage.removeItem('broker');
-        localStorage.removeItem('user');
-      }
+    localStorage.removeItem('session');
+    localStorage.removeItem('broker');
+    localStorage.removeItem('user');
+    localStorage.removeItem('selectedPlan');
+}
       
  
 
@@ -476,9 +477,48 @@ async function handleSignup(event) {
 })();
 
      
-   const paymentParam = new URLSearchParams(window.location.search).get('payment');
+//    const paymentParam = new URLSearchParams(window.location.search).get('payment');
+// const sessionParam = new URLSearchParams(window.location.search).get('session');
+// if (!paymentParam && !sessionParam) {
+//     const existingSession = localStorage.getItem('session');
+//     const existingBroker = localStorage.getItem('broker');
+
+//     if (existingSession && existingBroker) {
+//         try {
+//             const broker = JSON.parse(existingBroker);
+//             const session = JSON.parse(existingSession);
+//             if (session && session.access_token) {
+//                 if (broker.role === 'super_admin') {
+//                     window.location.href = '/admin.html';
+//                 } else if (broker.subscription_status === 'active') {
+//                     window.location.href = '/dashboard.html';
+//                 } else {
+//                     window.location.href = '/pricing.html';
+//                 }
+//             }
+//         } catch(e) {
+//             localStorage.removeItem('session');
+//             localStorage.removeItem('broker');
+//             localStorage.removeItem('user');
+//         }
+//     }
+// }
+
+const paymentParam = new URLSearchParams(window.location.search).get('payment');
 const sessionParam = new URLSearchParams(window.location.search).get('session');
-if (!paymentParam && !sessionParam) {
+
+if (paymentParam === 'cancelled') {
+    localStorage.removeItem('session');
+    localStorage.removeItem('broker');
+    localStorage.removeItem('user');
+    localStorage.removeItem('selectedPlan');
+
+    window.history.replaceState({}, document.title, '/index.html');
+
+    if (typeof showAlert === 'function') {
+        showAlert('Payment was cancelled. You can sign up again or log in with another account.', 'error');
+    }
+} else if (!paymentParam && !sessionParam) {
     const existingSession = localStorage.getItem('session');
     const existingBroker = localStorage.getItem('broker');
 
@@ -486,19 +526,31 @@ if (!paymentParam && !sessionParam) {
         try {
             const broker = JSON.parse(existingBroker);
             const session = JSON.parse(existingSession);
+
             if (session && session.access_token) {
                 if (broker.role === 'super_admin') {
                     window.location.href = '/admin.html';
                 } else if (broker.subscription_status === 'active') {
                     window.location.href = '/dashboard.html';
                 } else {
-                    window.location.href = '/pricing.html';
+                    /*
+                      Important:
+                      Do NOT force inactive/unpaid users back to pricing here.
+                      If someone presses browser Back from Stripe, they still have
+                      a temporary inactive session in localStorage. Redirecting them
+                      here causes the pricing-page lock.
+                    */
+                    localStorage.removeItem('session');
+                    localStorage.removeItem('broker');
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('selectedPlan');
                 }
             }
         } catch(e) {
             localStorage.removeItem('session');
             localStorage.removeItem('broker');
             localStorage.removeItem('user');
+            localStorage.removeItem('selectedPlan');
         }
     }
 }

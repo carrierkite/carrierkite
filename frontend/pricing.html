@@ -15,7 +15,8 @@
 <body class="auth-page">
     <div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px;">
 
-        <a href="/" class="logo-text" style="margin-bottom:40px; font-size:28px;">CarrierKite</a>
+        <!-- <a href="/" class="logo-text" style="margin-bottom:40px; font-size:28px;">CarrierKite</a> -->
+         <a href="/index.html?payment=cancelled" class="logo-text" style="margin-bottom:40px; font-size:28px;">CarrierKite</a>
 
         <div id="payment-cancelled" class="upload-alert error hidden" style="margin-bottom:20px; max-width:500px; width:100%;">
             Payment was cancelled. You can try again below.
@@ -59,10 +60,15 @@
                 </div>
         </div>
 
-        <p style="margin-top:24px; color:var(--light-gray); font-size:13px;">
+        <!-- <p style="margin-top:24px; color:var(--light-gray); font-size:13px;">
             Already subscribed? <a href="/" style="color:var(--gold);">Log in</a>
-        </p>
-
+        </p> -->
+<p style="margin-top:24px; color:var(--light-gray); font-size:13px; text-align:center;">
+    Not ready to subscribe?
+    <a href="/index.html?payment=cancelled" style="color:var(--gold);">
+        Go back to login
+    </a>
+</p>
     </div>
 
     <script>
@@ -72,9 +78,29 @@ const API_URL = window.location.hostname === 'localhost'
   // 'https://chocolate-panther-534690.hostingersite.com/api';
 
         // Show cancelled message if redirected from cancelled payment
-        if (new URLSearchParams(window.location.search).get('payment') === 'cancelled') {
-            document.getElementById('payment-cancelled').classList.remove('hidden');
-        }
+        // if (new URLSearchParams(window.location.search).get('payment') === 'cancelled') {
+        //     document.getElementById('payment-cancelled').classList.remove('hidden');
+        // }
+        function resetSubscribeButton() {
+    const btn     = document.getElementById('subscribe-btn');
+    const label   = document.getElementById('btn-label');
+    const spinner = document.getElementById('btn-spinner');
+
+    if (btn) btn.disabled = false;
+    if (label) label.textContent = 'Subscribe Now — $59/month';
+    if (spinner) spinner.classList.add('hidden');
+}
+
+// Show cancelled message if redirected from cancelled payment
+if (new URLSearchParams(window.location.search).get('payment') === 'cancelled') {
+    document.getElementById('payment-cancelled').classList.remove('hidden');
+    resetSubscribeButton();
+}
+
+// Important: fixes browser Back from Stripe restoring disabled button state
+window.addEventListener('pageshow', function() {
+    resetSubscribeButton();
+});
 
    function showAlert(msg, type) {
     const el = document.getElementById('payment-alert');
