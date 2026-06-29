@@ -62,8 +62,27 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false
 }));
 
-// Compress all responses — reduces transfer size by 60-80%
-app.use(compression());
+// Compress all text responses — reduces transfer size by 60-80%
+app.use(compression({
+    threshold: 1024,
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) return false;
+        return compression.filter(req, res);
+    }
+}));
+
+const staticOptions = {
+    etag: true,
+    lastModified: true,
+    maxAge: process.env.NODE_ENV === 'production' ? '30d' : '0',
+    setHeaders: (res, filePath) => {
+        if (/\.html$/i.test(filePath)) {
+            res.setHeader('Cache-Control', 'no-cache');
+        } else if (/\.(?:css|js|mjs|png|jpg|jpeg|webp|svg|gif|ico|woff2?)$/i.test(filePath)) {
+            res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+        }
+    }
+};
 
 const allowedOrigins = [
     'https://carrierkite.com',
@@ -138,16 +157,11 @@ app.use('/api/auth/', (req, res, next) => {
 app.use('/api/auth/forgot-password', forgotPasswordLimiter);
 app.use('/api/signatures/submit', signLimiter);
 
-app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
-    maxAge: '7d'
-}));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), staticOptions));
 
 // Debug — log the resolved uploads path on startup
 console.log('Uploads path:', path.join(__dirname, '../uploads'));
-app.use(express.static(path.join(__dirname, '../frontend'), {
-    maxAge: process.env.NODE_ENV === 'production' ? '1d' : '0',
-    etag: true
-}));
+app.use(express.static(path.join(__dirname, '../frontend'), staticOptions));
 const verifyAdmin = require('./middleware/verifyAdmin');
 app.use('/api/admin', verifyAdmin, require('./routes/admin'));
 app.use('/api/auth', authRoutes);

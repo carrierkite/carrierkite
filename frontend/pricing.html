@@ -10,25 +10,7 @@
     <title>Pricing - CarrierKite</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script>
-(function() {
-    var retryKey = '_cold_retry';
-    var retries = parseInt(sessionStorage.getItem(retryKey) || '0');
-    if (retries < 2) {
-        window.addEventListener('load', function() {
-            sessionStorage.removeItem(retryKey);
-        });
-        // If the page fails to fully load within 8 seconds, auto-reload
-        var timer = setTimeout(function() {
-            sessionStorage.setItem(retryKey, retries + 1);
-            location.reload();
-        }, 8000);
-        window.addEventListener('load', function() { clearTimeout(timer); });
-    } else {
-        sessionStorage.removeItem(retryKey);
-    }
-})();
-</script>
+
 </head>
 <body class="auth-page">
     <div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px;">

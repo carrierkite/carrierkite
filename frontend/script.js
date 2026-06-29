@@ -201,22 +201,24 @@ if (navToggle && navMenu) {
 }
 
 
-    const navbar = document.querySelector('.navbar');
+        const navbar = document.querySelector('.navbar');
     if (navbar) {
-        let lastScroll = 0;
+        let ticking = false;
+
+        const updateNavbar = () => {
+            const scrolled = window.pageYOffset > 100;
+            navbar.classList.toggle('navbar-scrolled', scrolled);
+            ticking = false;
+        };
+
         window.addEventListener('scroll', function() {
-            const currentScroll = window.pageYOffset;
-
-            if (currentScroll > 100) {
-                navbar.style.background = 'rgba(10, 10, 10, 0.98)';
-                navbar.style.boxShadow = '0 4px 30px rgba(212, 175, 55, 0.2)';
-            } else {
-                navbar.style.background = 'rgba(10, 10, 10, 0.95)';
-                navbar.style.boxShadow = '0 2px 20px rgba(212, 175, 55, 0.1)';
+            if (!ticking) {
+                requestAnimationFrame(updateNavbar);
+                ticking = true;
             }
+        }, { passive: true });
 
-            lastScroll = currentScroll;
-        });
+        updateNavbar();
     }
 
     const faqItems = document.querySelectorAll('.faq-item');
@@ -480,14 +482,22 @@ if (navToggle && navMenu) {
             });
         });
     }
-    const scrollIndicator = document.querySelector('.scroll-indicator');
+     const scrollIndicator = document.querySelector('.scroll-indicator');
     if (scrollIndicator) {
+        let ticking = false;
+
+        const updateScrollIndicator = () => {
+            scrollIndicator.classList.toggle('is-hidden', window.pageYOffset > 300);
+            ticking = false;
+        };
+
         window.addEventListener('scroll', function() {
-            if (window.pageYOffset > 300) {
-                scrollIndicator.style.opacity = '0';
-            } else {
-                scrollIndicator.style.opacity = '1';
+            if (!ticking) {
+                requestAnimationFrame(updateScrollIndicator);
+                ticking = true;
             }
-        });
+        }, { passive: true });
+
+        updateScrollIndicator();
     }
 });

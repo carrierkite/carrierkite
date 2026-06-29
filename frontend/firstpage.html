@@ -9,25 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CarrierKite - From Packet to Approved in Minutes</title>
     <link rel="stylesheet" href="styles.css">
-<script>
-(function() {
-    var retryKey = '_cold_retry';
-    var retries = parseInt(sessionStorage.getItem(retryKey) || '0');
-    if (retries < 2) {
-        window.addEventListener('load', function() {
-            sessionStorage.removeItem(retryKey);
-        });
-        // If the page fails to fully load within 8 seconds, auto-reload
-        var timer = setTimeout(function() {
-            sessionStorage.setItem(retryKey, retries + 1);
-            location.reload();
-        }, 8000);
-        window.addEventListener('load', function() { clearTimeout(timer); });
-    } else {
-        sessionStorage.removeItem(retryKey);
-    }
-})();
-</script>
+
 
 </head>
 <body>
@@ -194,6 +176,10 @@
                         src="https://images.pexels.com/photos/16663684/pexels-photo-16663684.jpeg?auto=compress&cs=tinysrgb&w=800" 
                         alt="Freight broker managing carrier documents" 
                         class="about-img"
+                        loading="lazy"
+                        decoding="async"
+                        width="800"
+                        height="533"
                     >
                 </div>
             </div>
@@ -250,7 +236,7 @@
                         Before CarrierKite, we were chasing carriers for signatures for days. Now the whole process takes minutes. Our onboarding time dropped by over 80% and our carriers actually appreciate how simple it is.
                     </p>
                     <div class="testimonial-author">
-                        <img src="https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=600" alt="James Holloway">
+                        <img src="https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=600" loading="lazy" decoding="async" width="56" height="56" alt="James Holloway">
                         <div>
                             <h5>James Holloway</h5>
                             <p>Owner, Holloway Freight Brokerage</p>
@@ -265,7 +251,7 @@
                         We manage over 40 carriers and keeping track of who signed what was a nightmare. CarrierKite gave us a single dashboard where everything is organized, timestamped, and ready for compliance review at any time.
                     </p>
                     <div class="testimonial-author">
-                        <img src="https://images.pexels.com/photos/1065084/pexels-photo-1065084.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Rachel Torres">
+                        <img src="https://images.pexels.com/photos/1065084/pexels-photo-1065084.jpeg?auto=compress&cs=tinysrgb&w=600" loading="lazy" decoding="async" width="56" height="56" alt="Rachel Torres">
                         <div>
                             <h5>Rachel Torres</h5>
                             <p>Operations Manager, Summit Logistics Group</p>
@@ -280,7 +266,7 @@
                         The signing link feature is brilliant. I send it to a carrier, they open it on their phone, upload the signed doc, and I get notified immediately. No more back-and-forth emails or missing attachments.
                     </p>
                     <div class="testimonial-author">
-                        <img src="https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Marcus Webb">
+                        <img src="https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=600" loading="lazy" decoding="async" width="56" height="56" alt="Marcus Webb">
                         <div>
                             <h5>Marcus Webb</h5>
                             <p>Founder, Webb Transport Solutions</p>
@@ -295,7 +281,7 @@
                         Switching to CarrierKite was the best operational decision we made this year. Our compliance rate is up, our team is less stressed, and we can onboard new carriers the same day we find them.
                     </p>
                     <div class="testimonial-author">
-                        <img src="https://images.pexels.com/photos/1181346/pexels-photo-1181346.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Diana Chen">
+                        <img src="https://images.pexels.com/photos/1181346/pexels-photo-1181346.jpeg?auto=compress&cs=tinysrgb&w=600" loading="lazy" decoding="async" width="56" height="56" alt="Diana Chen">
                         <div>
                             <h5>Diana Chen</h5>
                             <p>Director, CrossCountry Freight Partners</p>
@@ -418,6 +404,6 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>
