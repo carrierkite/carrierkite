@@ -3323,11 +3323,12 @@ select.form-input option {
 }
 
 .sign-pdf-toolbar button {
-    padding: 6px 12px;
+    padding: 6px 14px;
     font-size: 12px;
-    background: transparent;
-    border: 1px solid rgba(212,175,55,0.2);
-    color: var(--light-gray);
+    font-weight: 600;
+    background: rgba(212,175,55,0.1);
+    border: 1px solid rgba(212,175,55,0.3);
+    color: var(--gold);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
@@ -3336,9 +3337,12 @@ select.form-input option {
 }
 
 .sign-pdf-toolbar button:hover {
+    background: var(--gold);
+    color: var(--black);
     border-color: var(--gold);
-    color: var(--gold);
+    
 }
+
 
 .sign-pdf-toolbar .toolbar-page {
     color: var(--light-gray);
@@ -3387,6 +3391,14 @@ select.form-input option {
     font-size: 13px;
     color: var(--text-light);
     line-height: 1.6;
+}
+
+.sign-pdf-toolbar button:disabled {
+    background: rgba(212,175,55,0.1);
+    border: 1px solid rgba(212,175,55,0.3);
+    color: var(--gold);
+    opacity: 0.45;
+    cursor: not-allowed;
 }
 
 .sign-auto-notice svg {
@@ -4365,3 +4377,4 @@ select.form-input option {
         min-width: 0;
     }
 }
+

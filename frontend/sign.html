@@ -81,7 +81,7 @@
     </div>
 
     <!-- Page navigation -->
-    <div class="sign-pdf-toolbar">
+    <!-- <div class="sign-pdf-toolbar">
     <button onclick="changePage(-1)">← Prev</button>
     <span class="toolbar-page">Page <span id="current-page">1</span> of <span id="total-pages">1</span></span>
     <button onclick="changePage(1)">Next →</button>
@@ -89,7 +89,7 @@
     <button onclick="clearAllAnnotations()">🗑 Clear</button>
     <button id="erase-btn" onclick="toggleEraseMode()">🧹 Erase</button>
     <select id="font-size-select" onchange="updateFontSize(this.value)" 
-    style="padding:4px 8px; font-size:12px; background:var(--dark-gray); border:1px solid rgba(212,175,55,0.2); color:var(--light-gray); border-radius:4px; cursor:pointer;">
+    style="padding:4px 8px; font-size:12px; background:rgba(212,175,55,0.1); border:1px solid rgba(212,175,55,0.3); color:var(--gold); border-radius:4px; cursor:pointer; font-weight:600;" >
     <option value="9">Small</option>
     <option value="11" selected>Normal</option>
     <option value="14">Large</option>
@@ -102,7 +102,182 @@
         <span>Download</span>
     </button>
     <span class="toolbar-hint">💡 Click anywhere on the document to add text</span>
+</div> -->
+<style>
+    .sign-pdf-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 18px;
+        background: linear-gradient(180deg, #181818 0%, #101010 100%);
+        border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+        box-shadow: inset 0 -1px 0 rgba(212, 175, 55, 0.08);
+        flex-wrap: wrap;
+    }
+
+    .sign-pdf-toolbar .toolbar-gold-btn,
+    .sign-pdf-toolbar .btn-download,
+    .sign-pdf-toolbar .toolbar-gold-select {
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        min-height: 38px !important;
+        padding: 8px 16px !important;
+        background: linear-gradient(135deg, rgba(212,175,55,0.16), rgba(212,175,55,0.06)) !important;
+        border: 1px solid rgba(212,175,55,0.45) !important;
+        color: #d4af37 !important;
+        border-radius: 9px !important;
+        cursor: pointer !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        font-family: 'Inter', sans-serif !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 7px !important;
+        white-space: nowrap !important;
+        opacity: 1 !important;
+        letter-spacing: 0.2px;
+        box-shadow:
+            0 0 0 1px rgba(212,175,55,0.04),
+            0 6px 16px rgba(0,0,0,0.22);
+        transition:
+            background 0.2s ease,
+            color 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.2s ease,
+            box-shadow 0.2s ease !important;
+    }
+
+    .sign-pdf-toolbar .toolbar-gold-btn:hover,
+    .sign-pdf-toolbar .btn-download:hover,
+    .sign-pdf-toolbar .toolbar-gold-select:hover {
+        background: linear-gradient(135deg, #d4af37, #f1d36b) !important;
+        border-color: #f1d36b !important;
+        color: #050505 !important;
+        transform: translateY(-2px);
+        box-shadow:
+            0 8px 22px rgba(212,175,55,0.28),
+            0 0 0 1px rgba(241,211,107,0.45);
+    }
+
+    .sign-pdf-toolbar .toolbar-gold-btn:active,
+    .sign-pdf-toolbar .btn-download:active {
+        transform: translateY(0);
+        box-shadow:
+            0 3px 10px rgba(212,175,55,0.18),
+            0 0 0 1px rgba(212,175,55,0.35);
+    }
+
+    .sign-pdf-toolbar .toolbar-gold-select {
+        padding-right: 34px !important;
+        background-image:
+            linear-gradient(135deg, rgba(212,175,55,0.16), rgba(212,175,55,0.06)),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat, no-repeat !important;
+        background-position: center, right 12px center !important;
+        background-size: auto, 14px !important;
+    }
+
+    .sign-pdf-toolbar .toolbar-gold-select:hover {
+        background-image:
+            linear-gradient(135deg, #d4af37, #f1d36b),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23050505' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+    }
+
+    .sign-pdf-toolbar .toolbar-page {
+        color: #d9d9d9 !important;
+        font-size: 14px !important;
+        font-weight: 500;
+        white-space: nowrap;
+        padding: 0 2px;
+    }
+
+    .sign-pdf-toolbar .toolbar-page span {
+        color: #d4af37;
+        font-weight: 800;
+    }
+
+    .sign-pdf-toolbar .toolbar-hint {
+        color: rgba(212,175,55,0.9) !important;
+        font-size: 12px !important;
+        font-weight: 500;
+        margin-left: auto;
+        white-space: nowrap;
+    }
+
+    .sign-pdf-toolbar .toolbar-gold-btn:disabled,
+    .sign-pdf-toolbar .btn-download:disabled {
+        opacity: 0.45 !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    @media (max-width: 768px) {
+        .sign-pdf-toolbar {
+            gap: 8px;
+            padding: 12px;
+        }
+
+        .sign-pdf-toolbar .toolbar-gold-btn,
+        .sign-pdf-toolbar .btn-download,
+        .sign-pdf-toolbar .toolbar-gold-select {
+            font-size: 13px !important;
+            padding: 8px 12px !important;
+            min-height: 36px !important;
+        }
+
+        .sign-pdf-toolbar .toolbar-hint {
+            width: 100%;
+            margin-left: 0;
+        }
+    }
+</style>
+
+<div class="sign-pdf-toolbar">
+
+    <button class="toolbar-gold-btn" onclick="changePage(-1)">
+        ← Prev
+    </button>
+
+    <span class="toolbar-page">
+        Page <span id="current-page">1</span> of <span id="total-pages">1</span>
+    </span>
+
+    <button class="toolbar-gold-btn" onclick="changePage(1)">
+        Next →
+    </button>
+
+    <button class="toolbar-gold-btn" onclick="undoLast()">
+        ↩ Undo
+    </button>
+
+    <button class="toolbar-gold-btn" onclick="clearAllAnnotations()">
+        🗑 Clear
+    </button>
+
+    <button class="toolbar-gold-btn" id="erase-btn" onclick="toggleEraseMode()">
+        🧹 Erase
+    </button>
+
+    <select class="toolbar-gold-select" id="font-size-select" onchange="updateFontSize(this.value)">
+        <option value="9">Small</option>
+        <option value="11" selected>Normal</option>
+        <option value="14">Large</option>
+        <option value="18">X-Large</option>
+    </select>
+
+    <button class="btn-download toolbar-gold-btn" onclick="downloadPdf()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        <span>Download</span>
+    </button>
+
+    <span class="toolbar-hint">💡 Click anywhere on the document to add text</span>
+
 </div>
+
 
     <div class="sign-pdf-wrap" style="position:relative; overflow:auto;">
         <div id="pdf-container" style="position:relative; display:inline-block; cursor:text;">
