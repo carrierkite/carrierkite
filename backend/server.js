@@ -25,6 +25,7 @@ const packetRoutes = require('./routes/packets');
 const signatureRoutes = require('./routes/signatures');
 const rateLimit = require('express-rate-limit');
 const paymentRoutes = require('./routes/payments');
+const carrierRoutes = require('./routes/carriers');
 
 const compression = require('compression');
 const app = express();
@@ -135,6 +136,15 @@ const signLimiter = rateLimit({
   legacyHeaders: false
 });
 
+// Carrier lookup — prevent abuse of the free FMCSA data source
+const carrierLookupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many carrier lookups. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 // General API limit
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -156,6 +166,7 @@ app.use('/api/auth/', (req, res, next) => {
 });
 app.use('/api/auth/forgot-password', forgotPasswordLimiter);
 app.use('/api/signatures/submit', signLimiter);
+app.use('/api/carriers/', carrierLookupLimiter);
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), staticOptions));
 
@@ -165,6 +176,7 @@ app.use(express.static(path.join(__dirname, '../frontend'), staticOptions));
 const verifyAdmin = require('./middleware/verifyAdmin');
 app.use('/api/admin', verifyAdmin, require('./routes/admin'));
 app.use('/api/auth', authRoutes);
+app.use('/api/carriers', carrierRoutes);
 app.use('/api/packets', packetRoutes);
 app.use('/api/signatures', signatureRoutes);
 app.use('/api/payments', paymentRoutes);

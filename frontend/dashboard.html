@@ -101,17 +101,59 @@
         <h3 class="card-title">Send Carrier Packet</h3>
     </div>
 
-    <div id="upload-alert" class="upload-alert"></div>
+        <div id="upload-alert" class="upload-alert"></div>
+
+    <!-- STEP 1 — Look up the carrier and confirm its email -->
+    <div class="form-step-header">
+        <span class="form-step-number">1</span>
+        <span class="form-step-title">Verify Carrier</span>
+    </div>
 
     <div class="upload-form-grid">
+        <div class="form-group">
+                        <label class="form-label">MC Number or USDOT Number</label>
+            <div style="display:flex; gap:8px;">
+                <select id="carrier-lookup-type" class="form-input" style="flex:0 0 110px;">
+                    <option value="mc">MC #</option>
+                    <option value="usdot">USDOT #</option>
+                </select>
+                <input type="text" id="carrier-lookup-id" class="form-input" placeholder="digits only, e.g. 123456" inputmode="numeric" style="flex:1;">
+                <button type="button" class="btn btn-secondary" id="lookup-btn" onclick="lookupCarrier()" style="white-space:nowrap;">
+                    <span id="lookup-btn-text">🔍 Lookup</span>
+                    <span id="lookup-btn-loading" style="display:none;">Looking up…</span>
+                </button>
+            </div>
+            <small style="display:block;margin-top:6px;color:var(--light-gray);font-size:12px;">
+                Choose MC or USDOT above, then enter <strong>digits only</strong> — no "MC-" prefix needed.
+            </small>
+        </div>
         <div class="form-group">
             <label class="form-label">Carrier Name</label>
             <input type="text" id="carrier-name" class="form-input" placeholder="ABC Trucking Co.">
         </div>
-        <div class="form-group">
-            <label class="form-label">Carrier Email</label>
-            <input type="email" id="carrier-email" class="form-input" placeholder="carrier@company.com">
-        </div>
+    </div>
+
+    <div id="carrier-lookup-error" style="display:none;margin-bottom:16px;" class="upload-alert error"></div>
+
+    <div id="carrier-status-banner" style="display:none;margin-bottom:16px;"></div>
+
+    <div class="form-group" style="margin-bottom:20px;">
+        <label class="form-label">Carrier Email <span id="carrier-email-badge"></span></label>
+        <input type="email" id="carrier-email" class="form-input" placeholder="carrier@company.com">
+        <small id="carrier-email-hint" style="display:block;margin-top:6px;color:var(--light-gray);font-size:12px;">
+            Look up a carrier above to auto-fill their FMCSA email. You can edit it if you need to send to a different address.
+        </small>
+    </div>
+
+    <input type="hidden" id="carrier-mc" value="">
+    <input type="hidden" id="carrier-usdot" value="">
+    <input type="hidden" id="carrier-verified" value="false">
+    <input type="hidden" id="carrier-fmcsa-email" value="">
+
+    <!-- STEP 2 — Attach and send the packet -->
+    <div class="form-step-header">
+        <span class="form-step-number">2</span>
+        <span class="form-step-title">Attach &amp; Send</span>
     </div>
 
     <!-- Saved templates -->
@@ -154,8 +196,8 @@
         </div>
     </div>
 
-    <button class="btn btn-primary" id="send-btn" onclick="handleSend()" style="width:100%; justify-content:center; margin-top:20px;">
-        <span id="send-btn-label">Send Packet to Carrier</span>
+        <button class="btn btn-primary" id="send-btn" onclick="handleSend()" disabled style="width:100%; justify-content:center; margin-top:20px;">
+        <span id="send-btn-label">Look Up Carrier First</span>
         <span class="btn-arrow">→</span>
     </button>
 </div>
@@ -303,6 +345,134 @@ let currentSession = null;
 let currentBroker = null;
 let selectedTemplateId = null;
 let allPackets = [];
+let currentCarrierData = null;
+
+async function lookupCarrier() {
+    const lookupInput = document.getElementById('carrier-lookup-id').value.trim();
+    const lookupBtn = document.getElementById('lookup-btn');
+    const btnText = document.getElementById('lookup-btn-text');
+    const btnLoading = document.getElementById('lookup-btn-loading');
+    const errorDiv = document.getElementById('carrier-lookup-error');
+    const banner = document.getElementById('carrier-status-banner');
+    const sendBtn = document.getElementById('send-btn');
+    const sendBtnLabel = document.getElementById('send-btn-label');
+
+    errorDiv.style.display = 'none';
+    banner.style.display = 'none';
+    banner.innerHTML = '';
+
+    if (!lookupInput) {
+        errorDiv.textContent = 'Please enter an MC Number or USDOT Number';
+        errorDiv.style.display = 'block';
+        return;
+    }
+
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'inline';
+    lookupBtn.disabled = true;
+
+        try {
+        const cleanInput = lookupInput.replace(/[^0-9]/g, '');
+        const lookupType = document.getElementById('carrier-lookup-type').value; // 'mc' or 'usdot'
+
+        if (!cleanInput) {
+            errorDiv.textContent = 'Please enter digits only — no letters or dashes.';
+            errorDiv.style.display = 'block';
+            btnText.style.display = 'inline';
+            btnLoading.style.display = 'none';
+            lookupBtn.disabled = false;
+            return;
+        }
+
+        let lookupUrl = `${API_URL}/carriers/lookup?`;
+        lookupUrl += lookupType === 'mc' ? `mc=${cleanInput}` : `usdot=${cleanInput}`;
+
+        const response = await authFetch(lookupUrl, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${currentSession.access_token}` }
+        });
+        if (!response) return;
+
+        const data = await response.json();
+
+        if (!data.success || !data.carrier) {
+            errorDiv.textContent = data.error || 'Carrier not found. Please double-check the MC/USDOT number.';
+            errorDiv.style.display = 'block';
+            resetCarrierVerification();
+            return;
+        }
+
+        const carrier = data.carrier;
+        currentCarrierData = carrier;
+
+        document.getElementById('carrier-name').value = carrier.legalName || carrier.dbaName || '';
+        document.getElementById('carrier-mc').value = carrier.mcNumber || '';
+        document.getElementById('carrier-usdot').value = carrier.usdotNumber || '';
+        document.getElementById('carrier-fmcsa-email').value = carrier.email || '';
+        document.getElementById('carrier-verified').value = 'true';
+
+        const emailField = document.getElementById('carrier-email');
+        const badge = document.getElementById('carrier-email-badge');
+
+        if (carrier.email) {
+            emailField.value = carrier.email;
+            badge.textContent = '✓ FMCSA Verified';
+            badge.className = 'verified';
+            banner.className = 'carrier-banner success';
+            banner.innerHTML = `<span>✅</span><span>Carrier verified — <strong>${escapeHTML(carrier.legalName || 'this carrier')}</strong>. Email auto-filled from FMCSA records. You can edit it below if needed.</span>`;
+        } else {
+            emailField.value = '';
+            badge.textContent = '';
+            badge.className = '';
+            banner.className = 'carrier-banner warning';
+            banner.innerHTML = `<span>⚠️</span><span>Carrier <strong>${escapeHTML(carrier.legalName || 'found')}</strong> has no email on file with FMCSA. Please enter their email manually.</span>`;
+        }
+        banner.style.display = 'flex';
+
+        emailField.oninput = () => updateEmailBadge();
+
+        sendBtn.disabled = false;
+        sendBtnLabel.textContent = 'Send Packet to Carrier';
+
+    } catch (error) {
+        console.error('Carrier lookup error:', error);
+        errorDiv.textContent = 'Failed to look up carrier. Please try again.';
+        errorDiv.style.display = 'block';
+        resetCarrierVerification();
+    } finally {
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+        lookupBtn.disabled = false;
+    }
+}
+
+function updateEmailBadge() {
+    const badge = document.getElementById('carrier-email-badge');
+    const fmcsaEmail = document.getElementById('carrier-fmcsa-email').value;
+    const currentEmail = document.getElementById('carrier-email').value.trim();
+
+    if (!fmcsaEmail) { badge.textContent = ''; badge.className = ''; return; }
+
+    if (currentEmail.toLowerCase() === fmcsaEmail.toLowerCase()) {
+        badge.textContent = '✓ FMCSA Verified';
+        badge.className = 'verified';
+    } else {
+        badge.textContent = '✎ Edited by you';
+        badge.className = 'edited';
+    }
+}
+
+function resetCarrierVerification() {
+    currentCarrierData = null;
+    document.getElementById('carrier-verified').value = 'false';
+    document.getElementById('carrier-mc').value = '';
+    document.getElementById('carrier-usdot').value = '';
+    document.getElementById('carrier-fmcsa-email').value = '';
+    document.getElementById('carrier-email-badge').textContent = '';
+    document.getElementById('carrier-email-badge').className = '';
+    document.getElementById('send-btn').disabled = true;
+    document.getElementById('send-btn-label').textContent = 'Look Up Carrier First';
+}
 
 
 function escapeHTML(value) {
@@ -518,9 +688,15 @@ async function handleSend() {
 
     const carrierName  = document.getElementById('carrier-name').value.trim();
     const carrierEmail = document.getElementById('carrier-email').value.trim();
+    const mcNumber     = document.getElementById('carrier-mc').value.trim();
+    const usdotNumber  = document.getElementById('carrier-usdot').value.trim();
+    const isVerified   = document.getElementById('carrier-verified').value === 'true';
     const isNewUpload  = document.getElementById('upload-new-toggle').checked;
     const packetFile   = document.getElementById('packet-file').files[0];
 
+    if (!isVerified || (!mcNumber && !usdotNumber)) {
+        return showAlert('upload-alert', 'Please look up the carrier by MC or USDOT number first (Step 1)', 'error');
+    }
     if (!carrierName)  return showAlert('upload-alert', 'Please enter carrier name', 'error');
     if (!carrierEmail) return showAlert('upload-alert', 'Please enter carrier email', 'error');
     if (!isNewUpload && !selectedTemplateId) return showAlert('upload-alert', 'Please select a carrier packet or upload a new one', 'error');
@@ -531,7 +707,7 @@ async function handleSend() {
     label.textContent = 'Sending...';
 
     try {
-        let packet;
+        let packet, emailVerified, fmcsaEmail;
 
         if (isNewUpload) {
             // Upload new PDF
@@ -539,6 +715,8 @@ async function handleSend() {
             formData.append('packet', packetFile);
             formData.append('carrierName', carrierName);
             formData.append('carrierEmail', carrierEmail);
+            formData.append('mcNumber', mcNumber);
+            formData.append('usdotNumber', usdotNumber);
 
                 const res  = await authFetch(`${API_URL}/packets/upload`, {
                     method: 'POST',
@@ -549,6 +727,8 @@ async function handleSend() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
             packet = data.packet;
+            emailVerified = data.emailVerified;
+            fmcsaEmail = data.fmcsaEmail;
 
             // Save as template if checked
             if (document.getElementById('save-as-template').checked) {
@@ -572,25 +752,35 @@ async function handleSend() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${currentSession.access_token}`
                 },
-                body: JSON.stringify({ carrierName, carrierEmail, templateId: selectedTemplateId })
+                body: JSON.stringify({ carrierName, carrierEmail, mcNumber, usdotNumber, templateId: selectedTemplateId })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
             packet = data.packet;
+            emailVerified = data.emailVerified;
+            fmcsaEmail = data.fmcsaEmail;
         }
 
-        showAlert('upload-alert', '✓ Packet created! Click Send → in the table below to email it to the carrier.', 'success');
+        if (emailVerified === false && fmcsaEmail) {
+            showAlert('upload-alert', `✓ Packet created — heads up: you're sending to an email different from the FMCSA record (${fmcsaEmail}). Double-check this is correct.`, 'success');
+        } else {
+            showAlert('upload-alert', '✓ Packet created! Click Send → in the table below to email it to the carrier.', 'success');
+        }
+
+        document.getElementById('carrier-lookup-id').value = '';
         document.getElementById('carrier-name').value  = '';
         document.getElementById('carrier-email').value = '';
         document.getElementById('packet-file').value   = '';
         document.getElementById('file-name').textContent = '';
+        document.getElementById('carrier-status-banner').style.display = 'none';
+        resetCarrierVerification();
         await loadPackets();
 
     } catch (err) {
         showAlert('upload-alert', err.message || 'Failed to create packet', 'error');
     } finally {
         btn.disabled = false;
-        label.textContent = 'Send Packet to Carrier';
+        label.textContent = isVerified ? 'Send Packet to Carrier' : 'Look Up Carrier First';
     }
 }
 
