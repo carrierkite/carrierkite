@@ -25,10 +25,25 @@ const SOCRATA_APP_TOKEN = process.env.SOCRATA_APP_TOKEN || null; // optional, fr
 
 /**
  * Make an HTTPS GET request and parse JSON.
+ *
+ * Notes for hosting environments (VPS/shared hosting, e.g. Hostinger):
+ * - Some hosts have broken/unreliable outbound IPv6 routing. Forcing
+ *   `family: 4` (IPv4) avoids requests silently hanging or failing when
+ *   the host's IPv6 route to data.transportation.gov doesn't work.
+ * - Some firewalls/CDNs reject requests with no User-Agent header.
+ *   We always send one to avoid being silently blocked.
  */
 function httpRequest(url, headers = {}) {
     return new Promise((resolve, reject) => {
-        const request = https.get(url, { headers, timeout: 15000 }, (response) => {
+        const request = https.get(url, {
+            headers: {
+                'User-Agent': 'CarrierKite/1.0 (+https://carrierkite.com)',
+                'Accept': 'application/json',
+                ...headers
+            },
+            timeout: 15000,
+            family: 4 // force IPv4 — avoids broken outbound IPv6 on some hosts
+        }, (response) => {
             let data = '';
             response.on('data', (chunk) => { data += chunk; });
             response.on('end', () => {
@@ -107,7 +122,17 @@ async function lookupCarrier(mcNumber, usdotNumber) {
             url += `&$$app_token=${encodeURIComponent(SOCRATA_APP_TOKEN)}`;
         }
 
-        const rows = await httpRequest(url);
+         let rows;
+        try {
+            rows = await httpRequest(url);
+        } catch (networkError) {
+            console.error('FMCSA Census network error:', networkError.message);
+            return {
+                success: false,
+                error: 'Could not reach the FMCSA data service right now. This is a network issue on our server, not a problem with the MC/USDOT number — please try again shortly.',
+                networkError: true
+            };
+        }
 
         if (!Array.isArray(rows) || rows.length === 0) {
             return { success: false, error: 'Carrier not found in FMCSA database. Double-check the MC or USDOT number.' };
@@ -128,7 +153,11 @@ async function lookupCarrier(mcNumber, usdotNumber) {
 
     } catch (error) {
         console.error('FMCSA Census lookup error:', error.message);
-        return { success: false, error: 'FMCSA data lookup temporarily unavailable. Please try again in a moment.' };
+        return {
+            success: false,
+            error: 'FMCSA data lookup temporarily unavailable. Please try again in a moment.',
+            networkError: true
+        };
     }
 }
 
@@ -166,10 +195,15 @@ router.get('/lookup', async (req, res) => {
             });
         }
 
-        const result = await lookupCarrier(cleanMC, cleanUSDOT);
+         const result = await lookupCarrier(cleanMC, cleanUSDOT);
 
         if (!result.success) {
-            const status = result.requiresManualVerification ? 422 : 404;
+            // Distinguish network/outage failures (503) from a genuine
+            // "carrier not found" (404) or "no email on file" (422) —
+            // this matters for debugging in the browser Network tab.
+            let status = 404;
+            if (result.requiresManualVerification) status = 422;
+            if (result.networkError) status = 503;
             return res.status(status).json(result);
         }
 
