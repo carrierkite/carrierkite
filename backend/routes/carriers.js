@@ -54,8 +54,13 @@ function httpRequest(url, headers = {}) {
                 catch (e) { reject(new Error('Failed to parse response as JSON')); }
             });
         });
-        request.on('error', reject);
-        request.on('timeout', () => { request.destroy(); reject(new Error('Request timeout')); });
+          request.on('error', reject);
+        request.on('timeout', () => {
+            request.destroy();
+            const timeoutError = new Error('Request timeout after 15s');
+            timeoutError.code = 'ETIMEDOUT_CUSTOM';
+            reject(timeoutError);
+        });
     });
 }
 
@@ -122,15 +127,19 @@ async function lookupCarrier(mcNumber, usdotNumber) {
             url += `&$$app_token=${encodeURIComponent(SOCRATA_APP_TOKEN)}`;
         }
 
-         let rows;
+                let rows;
         try {
             rows = await httpRequest(url);
         } catch (networkError) {
-            console.error('FMCSA Census network error:', networkError.message);
+            console.error('FMCSA Census network error:', networkError.code || '(no code)', networkError.message);
             return {
                 success: false,
                 error: 'Could not reach the FMCSA data service right now. This is a network issue on our server, not a problem with the MC/USDOT number — please try again shortly.',
-                networkError: true
+                networkError: true,
+                // TEMPORARY diagnostic fields — remove once the underlying
+                // hosting/network issue is identified and fixed.
+                debugCode: networkError.code || null,
+                debugMessage: networkError.message || null
             };
         }
 
