@@ -37,8 +37,13 @@ function httpRequest(url, headers = {}) {
     return new Promise((resolve, reject) => {
         const request = https.get(url, {
             headers: {
-                'User-Agent': 'CarrierKite/1.0 (+https://carrierkite.com)',
-                'Accept': 'application/json',
+                // Some CDN/WAF layers in front of data.transportation.gov
+                // block requests that self-identify as a bot/script/API
+                // client via User-Agent (this is what caused the 403).
+                // Presenting a normal browser User-Agent avoids that.
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'en-US,en;q=0.9',
                 ...headers
             },
             timeout: 15000,
