@@ -4434,6 +4434,71 @@ select.form-input option {
     justify-content: center;
 }
 
+.carrier-lookup-row {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: stretch;
+    width: 100%;
+}
+
+.upload-form-grid,
+.upload-form-grid .form-group,
+.carrier-lookup-row,
+.carrier-lookup-row > * {
+    min-width: 0;
+}
+
+.lookup-select,
+.lookup-input,
+.lookup-btn {
+    max-width: 100%;
+}
+
+.lookup-input {
+    width: 100%;
+}
+
+.lookup-btn {
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.toggle-row,
+.checkbox-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.packet-row-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--black);
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.packet-action-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.packet-doc-links {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 @media (max-width: 900px) {
     .packets-header-enhanced {
         flex-direction: column;
@@ -4450,5 +4515,224 @@ select.form-input option {
         width: 100%;
         min-width: 0;
     }
+
+    .upload-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .carrier-lookup-row {
+        grid-template-columns: 96px minmax(0, 1fr);
+    }
+
+    .carrier-lookup-row .lookup-btn {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
 }
 
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 16px;
+        position: static;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .header-left,
+    .header-right {
+        width: 100%;
+    }
+
+    .header-right {
+        justify-content: flex-start;
+    }
+
+    .user-menu {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 8px 12px;
+    }
+
+    .dashboard-title {
+        font-size: 22px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .stat-card {
+        padding: 16px;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+    }
+
+    .stat-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .stat-number-real,
+    .real-stat-number,
+    .stat-number {
+        font-size: 22px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+    }
+
+    .stat-change {
+        font-size: 11px;
+    }
+
+    .dashboard-content {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .card {
+        padding: 20px 16px;
+    }
+
+    .card-header {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .carrier-lookup-row {
+        grid-template-columns: 1fr;
+    }
+
+    .lookup-btn {
+        width: 100%;
+    }
+
+    .packets-section {
+        overflow: visible;
+    }
+
+    .packets-section table,
+    .packets-section thead,
+    .packets-section tbody,
+    .packets-section th,
+    .packets-section td,
+    .packets-section tr {
+        display: block;
+        width: 100%;
+    }
+
+    .packets-section thead {
+        display: none;
+    }
+
+    .packets-section table {
+        min-width: 0;
+    }
+
+    .packets-section tbody {
+        display: grid;
+        gap: 12px;
+    }
+
+    .packets-section .packet-row {
+        background: rgba(42, 42, 42, 0.35);
+        border: 1px solid rgba(212, 175, 55, 0.12);
+        border-radius: 14px;
+        padding: 14px;
+    }
+
+    .packets-section .packet-row:hover {
+        transform: none;
+    }
+
+    .packets-section .packet-row td {
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.08);
+    }
+
+    .packets-section .packet-row td:first-child {
+        padding-top: 0;
+    }
+
+    .packets-section .packet-row td:last-child {
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .packets-section .packet-row td::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 6px;
+        color: var(--gold);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .packets-section .packet-row td[data-label="Carrier"]::before {
+        display: none;
+    }
+
+    .carrier-cell {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .packet-action-cell {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-send-packet,
+    .btn-approve,
+    .btn-reject {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .quick-action-buttons {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+        padding: 12px;
+    }
+
+    .dashboard-content {
+        padding: 12px;
+    }
+
+    .card {
+        padding: 16px 12px;
+    }
+
+    .user-info {
+        display: none;
+    }
+
+    .carrier-lookup-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    .carrier-lookup-row .lookup-select,
+    .carrier-lookup-row .lookup-input,
+    .carrier-lookup-row .lookup-btn {
+        width: 100%;
+    }
+}
