@@ -2,52 +2,23 @@ const express = require('express');
 const router = express.Router();
 const https = require('https');
 
-/**
- * FMCSA Carrier Lookup Service — 100% FREE VERSION
- *
- * Data source: FMCSA "Company Census File" (MCS-150 data), published as a
- * free, public, no-signup-required open dataset by data.transportation.gov:
- *   https://data.transportation.gov/resource/az4n-8mr2.json
- *
- * This is the SAME underlying government dataset that paid services like
- * verifycarrier.com and various "carrier list" vendors resell. Every
- * interstate carrier is legally required to file an MCS-150 form (which
- * includes a business email address) with FMCSA, and that data is public.
- *
- * No API key is strictly required. Optionally, you can register a free
- * Socrata "app token" at https://data.transportation.gov/profile/edit
- * (also free) to raise rate limits / improve reliability, and set it as
- * SOCRATA_APP_TOKEN below. The code works fine without it.
- */
-
 const CENSUS_DATASET_URL = 'https://data.transportation.gov/resource/az4n-8mr2.json';
-const SOCRATA_APP_TOKEN = process.env.SOCRATA_APP_TOKEN || null; // optional, free
+const SOCRATA_APP_TOKEN = process.env.SOCRATA_APP_TOKEN || null;
 
-/**
- * Make an HTTPS GET request and parse JSON.
- *
- * Notes for hosting environments (VPS/shared hosting, e.g. Hostinger):
- * - Some hosts have broken/unreliable outbound IPv6 routing. Forcing
- *   `family: 4` (IPv4) avoids requests silently hanging or failing when
- *   the host's IPv6 route to data.transportation.gov doesn't work.
- * - Some firewalls/CDNs reject requests with no User-Agent header.
- *   We always send one to avoid being silently blocked.
- */
+const FMCSA_RELAY_URL = process.env.FMCSA_RELAY_URL || null;
+const FMCSA_RELAY_SECRET = process.env.FMCSA_RELAY_SECRET || null;
+
 function httpRequest(url, headers = {}) {
     return new Promise((resolve, reject) => {
         const request = https.get(url, {
             headers: {
-                // Some CDN/WAF layers in front of data.transportation.gov
-                // block requests that self-identify as a bot/script/API
-                // client via User-Agent (this is what caused the 403).
-                // Presenting a normal browser User-Agent avoids that.
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
                 'Accept': 'application/json, text/plain, */*',
                 'Accept-Language': 'en-US,en;q=0.9',
                 ...headers
             },
             timeout: 15000,
-            family: 4 // force IPv4 — avoids broken outbound IPv6 on some hosts
+            family: 4
         }, (response) => {
             let data = '';
             response.on('data', (chunk) => { data += chunk; });
@@ -59,7 +30,7 @@ function httpRequest(url, headers = {}) {
                 catch (e) { reject(new Error('Failed to parse response as JSON')); }
             });
         });
-          request.on('error', reject);
+        request.on('error', reject);
         request.on('timeout', () => {
             request.destroy();
             const timeoutError = new Error('Request timeout after 15s');
@@ -69,9 +40,14 @@ function httpRequest(url, headers = {}) {
     });
 }
 
-/**
- * Build a Socrata SoQL query URL against the free Census dataset.
- */
+function fetchCensusData(directUrl) {
+    if (FMCSA_RELAY_URL && FMCSA_RELAY_SECRET) {
+        const relayUrl = `${FMCSA_RELAY_URL}?target=${encodeURIComponent(directUrl)}`;
+        return httpRequest(relayUrl, { 'X-Relay-Secret': FMCSA_RELAY_SECRET });
+    }
+    return httpRequest(directUrl);
+}
+
 function buildCensusUrl(whereClause) {
     const params = new URLSearchParams({
         '$where': whereClause,
@@ -81,9 +57,6 @@ function buildCensusUrl(whereClause) {
     return `${CENSUS_DATASET_URL}?${params.toString()}`;
 }
 
-/**
- * Normalize a raw Census record into our carrier shape.
- */
 function normalizeCarrier(record) {
     const mcNumber = record.docket1prefix === 'MC' ? record.docket1
         : (record.docket2prefix === 'MC' ? record.docket2
@@ -111,10 +84,6 @@ function normalizeCarrier(record) {
     };
 }
 
-/**
- * Lookup a carrier by MC number or USDOT number using the FREE
- * FMCSA Census dataset. Returns basic info AND email in one call.
- */
 async function lookupCarrier(mcNumber, usdotNumber) {
     try {
         let whereClause;
@@ -132,19 +101,15 @@ async function lookupCarrier(mcNumber, usdotNumber) {
             url += `&$$app_token=${encodeURIComponent(SOCRATA_APP_TOKEN)}`;
         }
 
-                let rows;
+        let rows;
         try {
-            rows = await httpRequest(url);
+            rows = await fetchCensusData(url);
         } catch (networkError) {
             console.error('FMCSA Census network error:', networkError.code || '(no code)', networkError.message);
             return {
                 success: false,
                 error: 'Could not reach the FMCSA data service right now. This is a network issue on our server, not a problem with the MC/USDOT number — please try again shortly.',
-                networkError: true,
-                // TEMPORARY diagnostic fields — remove once the underlying
-                // hosting/network issue is identified and fixed.
-                debugCode: networkError.code || null,
-                debugMessage: networkError.message || null
+                networkError: true
             };
         }
 
@@ -175,11 +140,6 @@ async function lookupCarrier(mcNumber, usdotNumber) {
     }
 }
 
-// ── ROUTES ──────────────────────────────────────────────────
-
-/**
- * GET /api/carriers/lookup?mc=XXX or &usdot=XXX
- */
 router.get('/lookup', async (req, res) => {
     try {
         const { mc, usdot } = req.query;
@@ -194,7 +154,6 @@ router.get('/lookup', async (req, res) => {
         const cleanMC = mc ? mc.replace(/^MC[-]?/i, '').trim() : null;
         const cleanUSDOT = usdot ? usdot.replace(/[^0-9]/g, '').trim() : null;
 
-        // Validate input
         if (cleanMC && !/^\d{4,7}$/.test(cleanMC)) {
             return res.status(400).json({
                 success: false,
@@ -209,12 +168,9 @@ router.get('/lookup', async (req, res) => {
             });
         }
 
-         const result = await lookupCarrier(cleanMC, cleanUSDOT);
+        const result = await lookupCarrier(cleanMC, cleanUSDOT);
 
         if (!result.success) {
-            // Distinguish network/outage failures (503) from a genuine
-            // "carrier not found" (404) or "no email on file" (422) —
-            // this matters for debugging in the browser Network tab.
             let status = 404;
             if (result.requiresManualVerification) status = 422;
             if (result.networkError) status = 503;
@@ -232,10 +188,6 @@ router.get('/lookup', async (req, res) => {
     }
 });
 
-/**
- * POST /api/carriers/verify-email
- * Verify that an email matches the FMCSA-registered carrier email.
- */
 router.post('/verify-email', async (req, res) => {
     try {
         const { mcNumber, usdotNumber, email } = req.body;
