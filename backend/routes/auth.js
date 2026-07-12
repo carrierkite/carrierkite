@@ -371,6 +371,61 @@ router.get('/me', async (req, res) => {
     return res.status(500).json({ error: 'Server error' });
   }
 });
+// ── DISABLE OWN ACCOUNT ──────────────────────────────────────
+router.post('/disable-account', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: 'Unauthorized' });
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error } = await supabaseAuth.auth.getUser(token);
+    if (error || !userData.user) return res.status(401).json({ error: 'Invalid token' });
+
+    // Set is_active to false immediately
+    const { error: updateError } = await supabase
+      .from('brokers')
+      .update({ is_active: false })
+      .eq('id', userData.user.id);
+
+    if (updateError) {
+      console.error('Disable account error:', updateError);
+      return res.status(500).json({ error: 'Failed to disable account' });
+    }
+
+    // Also try to cancel any active Stripe subscription as a courtesy
+    try {
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      const { data: broker } = await supabase
+        .from('brokers')
+        .select('stripe_customer_id')
+        .eq('id', userData.user.id)
+        .maybeSingle();
+
+      if (broker?.stripe_customer_id) {
+        const subscriptions = await stripe.subscriptions.list({
+          customer: broker.stripe_customer_id,
+          status: 'active',
+          limit: 1
+        });
+        if (subscriptions.data.length > 0) {
+          await stripe.subscriptions.cancel(subscriptions.data[0].id);
+        }
+      }
+    } catch (stripeErr) {
+      // Non-critical — account is already disabled
+      console.log('Stripe cleanup (optional):', stripeErr.message);
+    }
+
+    return res.status(200).json({
+      message: 'Your account has been disabled. You will be logged out.'
+    });
+
+  } catch (err) {
+    console.error('Disable account error:', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.get('/ping', (req, res) => res.json({ ok: true }));
 
 module.exports = router;
