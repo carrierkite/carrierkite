@@ -778,10 +778,19 @@ async function handleSend() {
             fmcsaEmail = data.fmcsaEmail;
         }
 
+                // Automatically send packet to carrier immediately on 1-click
+        const sendRes = await authFetch(`${API_URL}/packets/${packet.id}/send`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${currentSession.access_token}` }
+        });
+        if (!sendRes) return;
+        const sendData = await sendRes.json();
+        if (!sendRes.ok) throw new Error(sendData.error || 'Failed to send packet to carrier');
+
         if (emailVerified === false && fmcsaEmail) {
-            showAlert('upload-alert', `✓ Packet created — heads up: you're sending to an email different from the FMCSA record (${fmcsaEmail}). Double-check this is correct.`, 'success');
+            showAlert('upload-alert', `✓ Packet successfully sent to carrier! Heads up: you sent to an email different from the FMCSA record (${fmcsaEmail}).`, 'success');
         } else {
-            showAlert('upload-alert', '✓ Packet created! Click Send → in the table below to email it to the carrier.', 'success');
+            showAlert('upload-alert', '✓ Packet successfully sent to carrier! The carrier has received an email with the signing link.', 'success');
         }
 
         document.getElementById('carrier-lookup-id').value = '';
@@ -1099,9 +1108,9 @@ function getStatusBadge(status) {
         }
 
 function getActionButtons(packet) {
-            if (packet.status === 'pending') {
-                return `<button class="btn-send-packet" onclick="sendPacket('${packet.id}')">Send →</button>`;
-            } else if (packet.status === 'sent') {
+    if (packet.status === 'pending') {
+        return `<span style="font-size:12px; color:var(--light-gray)">Pending</span>`;
+    } else if (packet.status === 'sent') {
                 return `<span style="font-size:12px; color:var(--light-gray)">Awaiting signature</span>`;
             } else if (packet.status === 'signed') {
                 return `
