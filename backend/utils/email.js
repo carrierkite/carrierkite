@@ -379,10 +379,116 @@ async function sendVerificationEmail(email, verifyUrl) {
   });
 }
 
+async function sendSubscriptionThankYouEmail(brokerEmail, companyName) {
+  const safeCompany = escapeHtml(companyName || 'Valued Broker');
+  const dashboardUrl = `${process.env.APP_URL}/dashboard.html`;
+
+  await resend.emails.send({
+    from: FROM,
+    to: brokerEmail,
+    subject: 'Thank you for subscribing to CarrierKite!',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+          <tr><td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+              <tr><td style="background:#1a1a1a;padding:30px;text-align:center;">
+                <h1 style="margin:0;color:#d4af37;font-size:24px;font-weight:700;">CarrierKite</h1>
+                <p style="margin:8px 0 0;color:#999;font-size:14px;">Subscription Activated</p>
+              </td></tr>
+              <tr><td style="padding:40px;">
+                <p style="font-size:16px;color:#333;margin:0 0 16px;">Hello <strong>${safeCompany}</strong>,</p>
+                <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 16px;">
+                  Thank you so much for purchasing your <strong>CarrierKite</strong> subscription! Your account is now fully active, and you have access to all professional features, including unlimited carrier packets, secure digital signatures, and instant notifications.
+                </p>
+                <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 24px;">
+                  You can jump right into your dashboard to start sending packets and onboarding carriers:
+                </p>
+                <p style="text-align:center;margin:0 0 24px;">
+                  <a href="${dashboardUrl}"
+                     style="display:inline-block;padding:14px 32px;background:#d4af37;color:#000000;text-decoration:none;border-radius:6px;font-weight:bold;font-size:16px;">
+                    Go to Dashboard
+                  </a>
+                </p>
+                <p style="font-size:14px;color:#777;margin:0;line-height:1.5;">
+                  If you have any questions or need assistance, simply reply to this email or contact our support team. We're thrilled to have you on board!
+                </p>
+              </td></tr>
+              <tr><td style="background:#f8f8f8;padding:20px;text-align:center;border-top:1px solid #eee;">
+                <p style="margin:0;font-size:12px;color:#999;">Automated email from CarrierKite. Thank you for your business.</p>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </body>
+      </html>
+    `
+  });
+}
+
+async function sendSubscriptionCancelledEmail(brokerEmail, companyName, endDate) {
+  const safeCompany = escapeHtml(companyName || 'Valued Broker');
+  const safeEndDate = escapeHtml(endDate || 'the end of your billing period');
+  const pricingUrl = `${process.env.APP_URL}/pricing.html`;
+
+  await resend.emails.send({
+    from: FROM,
+    to: brokerEmail,
+    subject: 'Your CarrierKite subscription has been cancelled',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+          <tr><td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+              <tr><td style="background:#1a1a1a;padding:30px;text-align:center;">
+                <h1 style="margin:0;color:#d4af37;font-size:24px;font-weight:700;">CarrierKite</h1>
+                <p style="margin:8px 0 0;color:#999;font-size:14px;">Subscription Cancellation Notice</p>
+              </td></tr>
+              <tr><td style="padding:40px;">
+                <p style="font-size:16px;color:#333;margin:0 0 16px;">Hello <strong>${safeCompany}</strong>,</p>
+                <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 16px;">
+                  We received your request to cancel your CarrierKite subscription. This email confirms that your subscription has been successfully cancelled.
+                </p>
+                <div style="background:#f9f7ef;border:1px solid #eadca8;border-radius:6px;padding:16px;margin:20px 0;">
+                  <p style="font-size:15px;color:#333;margin:0;line-height:1.5;">
+                    <strong>Important:</strong> You can continue using all CarrierKite features and your active packets until the end of your billing cycle</strong>. No further charges will be made to your payment method.
+                  </p>
+                </div>
+                <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 24px;">
+                  If you ever change your mind or want to reactivate your subscription in the future, you can do so anytime from your pricing or billing settings.
+                </p>
+                <p style="text-align:center;margin:0 0 24px;">
+                  <a href="${pricingUrl}"
+                     style="display:inline-block;padding:14px 32px;background:#1a1a1a;color:#d4af37;text-decoration:none;border-radius:6px;font-weight:bold;font-size:16px;">
+                    View Pricing & Plans
+                  </a>
+                </p>
+                <p style="font-size:14px;color:#777;margin:0;line-height:1.5;">
+                  Thank you for using CarrierKite. We hope to serve you again in the future!
+                </p>
+              </td></tr>
+              <tr><td style="background:#f8f8f8;padding:20px;text-align:center;border-top:1px solid #eee;">
+                <p style="margin:0;font-size:12px;color:#999;">Automated email from CarrierKite. Please do not reply.</p>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </body>
+      </html>
+    `
+  });
+}
+
 module.exports = {
   sendCarrierSigningEmail,
   sendBrokerNotificationEmail,
   sendReviewEmail,
   sendPasswordResetEmail,
-  sendVerificationEmail
+  sendVerificationEmail,
+  sendSubscriptionThankYouEmail,
+  sendSubscriptionCancelledEmail
 };

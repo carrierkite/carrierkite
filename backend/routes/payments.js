@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const supabase = require('../config/supabase');
+const { sendSubscriptionThankYouEmail, sendSubscriptionCancelledEmail } = require('../utils/email');
 
 // TEMP: Payments disabled for testing
 module.exports = router;
@@ -75,12 +76,12 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
   try {
     switch (event.type) {
 
-      case 'checkout.session.completed': {
+       case 'checkout.session.completed': {
         const session    = event.data.object;
         const brokerId   = session.metadata.broker_id;
         const customerId = session.customer;
 
-        const { error } = await supabase
+        const { data: broker, error } = await supabase
           .from('brokers')
           .update({
             subscription_status: 'active',
@@ -88,13 +89,24 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
             stripe_customer_id:  customerId,
             is_active:           true
           })
-          .eq('id', brokerId);
+          .eq('id', brokerId)
+          .select()
+          .maybeSingle();
 
-        if (error) console.error('Failed to activate broker:', error);
-        else console.log(`✅ Broker activated: ${brokerId}`);
+        if (error) {
+          console.error('Failed to activate broker:', error);
+        } else {
+          console.log(`✅ Broker activated: ${brokerId}`);
+          if (broker && broker.email) {
+            try {
+              await sendSubscriptionThankYouEmail(broker.email, broker.company_name);
+            } catch (emailErr) {
+              console.error('Failed to send subscription thank you email:', emailErr);
+            }
+          }
+        }
         break;
       }
-
       case 'invoice.payment_succeeded': {
         const invoice    = event.data.object;
         const customerId = invoice.customer;
@@ -176,9 +188,20 @@ router.post('/cancel-subscription', async (req, res) => {
       return res.status(400).json({ error: 'No active subscription found.' });
     }
 
-    await stripe.subscriptions.update(subscriptions.data[0].id, {
+    const subscription = subscriptions.data[0];
+    await stripe.subscriptions.update(subscription.id, {
       cancel_at_period_end: true
     });
+
+    const endDate = subscription.current_period_end
+      ? new Date(subscription.current_period_end * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : 'the end of your billing period';
+
+    try {
+      await sendSubscriptionCancelledEmail(broker.email, broker.company_name, endDate);
+    } catch (emailErr) {
+      console.error('Failed to send subscription cancellation email:', emailErr);
+    }
 
     return res.status(200).json({
       message: 'Subscription will be cancelled at end of billing period.'
