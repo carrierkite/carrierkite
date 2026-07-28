@@ -2,10 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const https = require('https');
+const crypto = require('crypto');
 require('dotenv').config();
 const REQUIRED_ENV = [
     'VITE_SUPABASE_URL',
+    'VITE_SUPABASE_ANON_KEY',
     'SUPABASE_SERVICE_ROLE_KEY',
+    'RESEND_API_KEY',
     'APP_URL',
     'STRIPE_SECRET_KEY',
     'STRIPE_PRICE_ID',
@@ -42,16 +45,6 @@ if (!fs.existsSync(uploadsDir)) {
 app.set('trust proxy', 1);
 
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-    }
-    next();
-});
-
-app.use((req, res, next) => {
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Keep-Alive', 'timeout=60');
     next();
@@ -85,21 +78,51 @@ const staticOptions = {
     }
 };
 
-const allowedOrigins = [
+const allowedOrigins = new Set([
     'https://carrierkite.com',
-    'https://www.carrierkite.com',
-];
-if (process.env.NODE_ENV !== 'production') {
-    allowedOrigins.push('http://localhost:3000', 'http://localhost:5500');
+    'https://www.carrierkite.com'
+]);
+
+try {
+    allowedOrigins.add(
+        new URL(process.env.APP_URL).origin
+    );
+} catch {
+    console.error(
+        '❌ APP_URL must be a valid absolute URL'
+    );
+    process.exit(1);
 }
+
+if (process.env.NODE_ENV !== 'production') {
+    allowedOrigins.add('http://localhost:3000');
+    allowedOrigins.add('http://localhost:5500');
+    allowedOrigins.add('http://127.0.0.1:3000');
+    allowedOrigins.add('http://127.0.0.1:5500');
+}
+
 app.use(cors({
-    origin: function(origin, callback) {
-        // Allow requests with no origin (mobile apps, curl, same-origin)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) return callback(null, true);
+    origin(origin, callback) {
+        if (!origin || allowedOrigins.has(origin)) {
+            return callback(null, true);
+        }
+
         return callback(null, false);
     },
-    credentials: true
+    credentials: true,
+    methods: [
+        'GET',
+        'POST',
+        'PUT',
+        'PATCH',
+        'DELETE',
+        'OPTIONS'
+    ],
+    allowedHeaders: [
+        'Content-Type',
+        'Authorization'
+    ],
+    maxAge: 600
 }));
 
 // Stripe webhook needs raw body — must be before express.json()
@@ -118,11 +141,54 @@ const authLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// Forgot password — extra strict
+// Forgot password — strict per-IP limit.
 const forgotPasswordLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
+  windowMs: 60 * 60 * 1000,
   max: 5,
-  message: { error: 'Too many password reset attempts. Please try again in 1 hour.' },
+  message: {
+    error:
+      'Too many password reset attempts. Please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Also limit requests targeting the same normalized email.
+// The email is hashed before being used as a rate-limit key.
+const forgotPasswordEmailLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+
+  keyGenerator: (req) => {
+    const email =
+      typeof req.body?.email === 'string'
+        ? req.body.email.trim().toLowerCase()
+        : 'invalid-email';
+
+    return crypto
+      .createHash('sha256')
+      .update(email)
+      .digest('hex');
+  },
+
+  message: {
+    error:
+      'Too many password reset attempts. Please try again later.'
+  },
+
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const resetPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+
+  message: {
+    error:
+      'Too many reset attempts. Please request a new link and try again later.'
+  },
+
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -164,7 +230,16 @@ app.use('/api/auth/', (req, res, next) => {
     if (req.path === '/ping') return next();
     authLimiter(req, res, next);
 });
-app.use('/api/auth/forgot-password', forgotPasswordLimiter);
+app.use(
+  '/api/auth/forgot-password',
+  forgotPasswordLimiter,
+  forgotPasswordEmailLimiter
+);
+
+app.use(
+  '/api/auth/reset-password',
+  resetPasswordLimiter
+);
 app.use('/api/signatures/submit', signLimiter);
 app.use('/api/carriers/', carrierLookupLimiter);
 

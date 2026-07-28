@@ -1,12 +1,133 @@
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 const supabase = require('../config/supabase');
 const { createClient } = require('@supabase/supabase-js');
 const { sendPasswordResetEmail } = require('../utils/email');
-const supabaseAuth = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
-);
+
+const SUPABASE_AUTH_OPTIONS = {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+};
+
+function createAuthClient() {
+  return createClient(
+    process.env.VITE_SUPABASE_URL,
+    process.env.VITE_SUPABASE_ANON_KEY,
+    SUPABASE_AUTH_OPTIONS
+  );
+}
+
+const supabaseAuth = createAuthClient();
+
+const GENERIC_RECOVERY_MESSAGE =
+  'If an account exists with this email, you will receive a reset link shortly.';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const COMMON_PASSWORDS = new Set([
+  '123456789012',
+  'qwertyuiop12',
+  'password1234',
+  'password123!',
+  'letmein123456',
+  'carrierkite123'
+]);
+
+function normalizeEmail(value) {
+  return typeof value === 'string'
+    ? value.trim().toLowerCase()
+    : '';
+}
+
+function isValidEmail(email) {
+  if (!email || email.length > 254 || !EMAIL_PATTERN.test(email)) {
+    return false;
+  }
+
+  const [localPart] = email.split('@');
+  return localPart.length > 0 && localPart.length <= 64;
+}
+
+function validatePassword(password) {
+  if (typeof password !== 'string') {
+    return 'Password is required.';
+  }
+
+  if (password.length < 12) {
+    return 'Password must be at least 12 characters.';
+  }
+
+  if (password.length > 128) {
+    return 'Password must be no more than 128 characters.';
+  }
+
+  if (/[\u0000-\u001F\u007F]/.test(password)) {
+    return 'Password cannot contain control characters.';
+  }
+
+  if (COMMON_PASSWORDS.has(password.toLowerCase())) {
+    return 'That password is too common. Please choose a different password.';
+  }
+
+  return null;
+}
+
+function getRecoveryTokenHash(linkData) {
+  const directToken = linkData?.properties?.hashed_token;
+
+  if (typeof directToken === 'string' && directToken) {
+    return directToken;
+  }
+
+  // Compatibility fallback for older supabase-js versions.
+  const actionLink = linkData?.properties?.action_link;
+
+  if (typeof actionLink !== 'string') {
+    return null;
+  }
+
+  try {
+    return new URL(actionLink).searchParams.get('token');
+  } catch {
+    return null;
+  }
+}
+
+function buildResetUrl(tokenHash) {
+  const resetUrl = new URL(
+    '/reset-password.html',
+    process.env.APP_URL
+  );
+
+  // URL fragments are not sent to the web server or normal Referer headers.
+  resetUrl.hash = new URLSearchParams({
+    token_hash: tokenHash,
+    type: 'recovery'
+  }).toString();
+
+  return resetUrl.toString();
+}
+
+async function applyRecoveryResponseDelay(startedAt) {
+  // Reduce timing differences between existing and unknown accounts.
+  const targetMs = 1000 + crypto.randomInt(0, 301);
+  const remainingMs = targetMs - (Date.now() - startedAt);
+
+  if (remainingMs > 0) {
+    await new Promise(resolve => setTimeout(resolve, remainingMs));
+  }
+}
+
+function setSensitiveResponseHeaders(res) {
+  res.set({
+    'Cache-Control': 'no-store, max-age=0',
+    Pragma: 'no-cache'
+  });
+}
 
 router.post('/signup', async (req, res) => {
   
@@ -16,16 +137,33 @@ router.post('/signup', async (req, res) => {
     const allowedPlans = ['basic', 'pro', 'enterprise'];
     const plan = allowedPlans.includes(selectedPlan) ? selectedPlan : 'basic';
 
-    if (!email || !password || !companyName) {
+        if (!email || !password || !companyName) {
       return res.status(400).json({
         error: 'Email, password, and company name are required'
       });
     }
 
-    const { data: authData, error: authError } = await supabaseAuth.auth.signUp({
-      email,
-      password
-    });
+    const normalizedEmail = normalizeEmail(email);
+
+    if (!isValidEmail(normalizedEmail)) {
+      return res.status(400).json({
+        error: 'Please enter a valid email address.'
+      });
+    }
+
+    const passwordError = validatePassword(password);
+
+    if (passwordError) {
+      return res.status(400).json({
+        error: passwordError
+      });
+    }
+
+    const { data: authData, error: authError } =
+      await supabaseAuth.auth.signUp({
+        email: normalizedEmail,
+        password
+      });
 
     if (authError) {
       console.error('Signup error:', authError);
@@ -40,7 +178,7 @@ router.post('/signup', async (req, res) => {
       .from('brokers')
       .insert([{
         id: authData.user.id,
-        email: email,
+        email: normalizedEmail,
         company_name: companyName,
         subscription_plan: plan,
 subscription_status: 'inactive',
@@ -169,90 +307,147 @@ router.post('/logout', async (req, res) => {
 
 // ── FORGOT PASSWORD ──────────────────────────────────────────
 router.post('/forgot-password', async (req, res) => {
+  const startedAt = Date.now();
+  setSensitiveResponseHeaders(res);
+
+  const email = normalizeEmail(req.body?.email);
+
+  if (!isValidEmail(email)) {
+    return res.status(400).json({
+      error: 'Please enter a valid email address.'
+    });
+  }
+
   try {
-    const { email } = req.body;
+    // Supabase Auth is the source of truth.
+    // Do not query brokers first because that can expose account existence.
+    const { data, error } =
+      await supabase.auth.admin.generateLink({
+        type: 'recovery',
+        email
+      });
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+    const tokenHash = getRecoveryTokenHash(data);
+
+    if (error || !tokenHash) {
+      // Unknown accounts also arrive here. Never expose that to the client.
+      console.error(
+        'Password recovery link generation failed:',
+        error?.message || 'No recovery token returned'
+      );
+    } else {
+      const resetUrl = buildResetUrl(tokenHash);
+
+      await sendPasswordResetEmail(
+        email,
+        resetUrl
+      );
     }
+  } catch (error) {
+    // Always keep the public response generic.
+    console.error(
+      'Password recovery request failed:',
+      error?.message || 'Unknown error'
+    );
+  }
 
-    // Check broker exists
-    const { data: broker } = await supabase
-      .from('brokers')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
+  await applyRecoveryResponseDelay(startedAt);
 
-    // Always return success to prevent email enumeration
-    if (!broker) {
-      return res.status(200).json({
-        message: 'If an account exists with this email, you will receive a reset link shortly.'
+  return res.status(200).json({
+    message: GENERIC_RECOVERY_MESSAGE
+  });
+});
+
+// ── RESET PASSWORD ───────────────────────────────────────────
+router.post('/reset-password', async (req, res) => {
+  setSensitiveResponseHeaders(res);
+
+  const { password, tokenHash } = req.body || {};
+  const passwordError = validatePassword(password);
+
+  if (passwordError) {
+    return res.status(400).json({
+      error: passwordError
+    });
+  }
+
+  if (
+    typeof tokenHash !== 'string' ||
+    tokenHash.length < 32 ||
+    tokenHash.length > 512 ||
+    !/^[A-Za-z0-9._~-]+$/.test(tokenHash)
+  ) {
+    return res.status(400).json({
+      error: 'Invalid or expired reset link.'
+    });
+  }
+
+  try {
+    // Use a new client for every recovery request.
+    const recoveryClient = createAuthClient();
+
+    // The hard-coded "recovery" type proves this is a recovery token.
+    const { data: recoveryData, error: verifyError } =
+      await recoveryClient.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: 'recovery'
+      });
+
+    if (
+      verifyError ||
+      !recoveryData?.user ||
+      !recoveryData?.session
+    ) {
+      return res.status(400).json({
+        error: 'Invalid or expired reset link.'
       });
     }
 
-    // Generate reset token using Supabase admin (doesn't send email)
-    const { data, error } = await supabase.auth.admin.generateLink({
-      type: 'recovery',
-      email: email,
-      options: {
-        redirectTo: `${process.env.APP_URL}/reset-password.html`
-      }
-    });
+    // Update using the verified recovery session.
+    // Do not use admin.updateUserById here.
+    const { error: updateError } =
+      await recoveryClient.auth.updateUser({
+        password
+      });
 
-    if (error) {
-      console.error('Generate reset link error:', error);
-      return res.status(500).json({ error: 'Failed to generate reset link' });
+    if (updateError) {
+      console.error(
+        'Password update failed:',
+        updateError.message
+      );
+
+      return res.status(400).json({
+        error:
+          'Unable to update the password. Please request a new reset link.'
+      });
     }
 
-    // Send the email ourselves via Gmail
-    const resetUrl = data.properties.action_link;
-    await sendPasswordResetEmail(email, resetUrl);
+    // Revoke refresh sessions on every device.
+    const { error: signOutError } =
+      await recoveryClient.auth.signOut({
+        scope: 'global'
+      });
+
+    if (signOutError) {
+      console.error(
+        'Post-reset session revocation failed:',
+        signOutError.message
+      );
+    }
 
     return res.status(200).json({
-      message: 'If an account exists with this email, you will receive a reset link shortly.'
+      message:
+        'Password updated successfully. Please sign in again.'
     });
-
   } catch (error) {
-    console.error('Forgot password error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
-// ── RESET PASSWORD ───────────────────────────────────────────
-router.post('/reset-password', async (req, res) => {
-  try {
-    const { password, accessToken } = req.body;
+    console.error(
+      'Password reset failed:',
+      error?.message || 'Unknown error'
+    );
 
-    if (!password || !accessToken) {
-      return res.status(400).json({ error: 'Password and token are required' });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
-    }
-
-    // Set the session using the access token from the email link
-    // First validate the token and get the user
-const { data: userData, error: userError } = await supabaseAuth.auth.getUser(accessToken);
-if (userError || !userData?.user) {
-    return res.status(401).json({ error: 'Invalid or expired reset link' });
-}
-
-// Then update the password using admin client
-const { error } = await supabase.auth.admin.updateUserById(
-    userData.user.id,
-    { password }
-);
-
-    if (error) {
-      console.error('Update password error:', error);
-      return res.status(400).json({ error: 'Failed to update password. Link may have expired.' });
-    }
-
-    return res.status(200).json({ message: 'Password updated successfully' });
-
-  } catch (error) {
-    console.error('Reset password error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(400).json({
+      error: 'Invalid or expired reset link.'
+    });
   }
 });
 

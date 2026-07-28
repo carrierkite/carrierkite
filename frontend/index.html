@@ -159,20 +159,20 @@
                         <div class="form-group">
                             <label for="signup-password" class="form-label">Password</label>
                             <div class="input-wrapper">
-                                <input type="password" id="signup-password" class="form-input" placeholder="••••••••" required>
+                                <input type="password" id="signup-password" class="form-input" placeholder="••••••••" autocomplete="new-password" required minlength="12" maxlength="128">
                                 <span class="input-icon">🔒</span>
                             </div>
                             <div class="password-strength">
                                 <div class="strength-bar">
                                     <div class="strength-fill" id="strength-fill"></div>
                                 </div>
-                                <span class="strength-text">Use 8+ characters with mix of letters & numbers</span>
+                                <span class="strength-text">Use at least 12 characters; a long, unique passphrase is best</span>
                             </div>
                         </div>
                         <div class="form-group">
                             <label for="signup-confirm-password" class="form-label">Confirm Password</label>
                             <div class="input-wrapper">
-                                <input type="password" id="signup-confirm-password" class="form-input" placeholder="Repeat password" required minlength="6">
+                                <input type="password" id="signup-confirm-password" class="form-input" placeholder="Repeat password" autocomplete="new-password" required minlength="12" maxlength="128">
                                 <span class="input-icon">🔒</span>
                             </div>
                         </div>
@@ -356,8 +356,8 @@ async function handleSignup(event) {
         return;
     }
 
-    if (password.length < 6) {
-        showAlert('Password must be at least 6 characters', 'error');
+        if (password.length < 12) {
+        showAlert('Password must be at least 12 characters', 'error');
         return;
     }
 
@@ -426,8 +426,8 @@ async function handleSignup(event) {
             const fill = document.getElementById('strength-fill');
             if (!fill) return;
             let strength = 0;
-            if (val.length >= 6) strength += 30;
-            if (val.length >= 10) strength += 20;
+            if (val.length >= 12) strength += 30;
+            if (val.length >= 16) strength += 20;
             if (/[A-Z]/.test(val)) strength += 20;
             if (/[0-9]/.test(val)) strength += 20;
             if (/[^A-Za-z0-9]/.test(val)) strength += 10;

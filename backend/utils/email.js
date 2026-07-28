@@ -304,7 +304,9 @@ async function sendReviewEmail(carrierEmail, carrierName, action, rejectionReaso
 }
 
 async function sendPasswordResetEmail(email, resetUrl) {
-  await resend.emails.send({
+  const safeResetUrl = escapeHtml(resetUrl);
+
+  const { data, error } = await resend.emails.send({
     from: FROM,
     to: email,
     subject: 'Reset Your CarrierKite Password',
@@ -322,7 +324,7 @@ async function sendPasswordResetEmail(email, resetUrl) {
                 <p style="font-size:15px;color:#555;">We received a request to reset your CarrierKite password.</p>
                 <p style="font-size:15px;color:#555;">Click below to reset it. This link expires in <strong>1 hour</strong>.</p>
                 <p style="text-align:center;">
-                  <a href="${resetUrl}"
+                  <a href="${safeResetUrl}"
                      style="display:inline-block;padding:12px 24px;background:#d4af37;color:#000;text-decoration:none;border-radius:4px;font-weight:bold;">
                     Reset My Password
                   </a>
@@ -340,6 +342,15 @@ async function sendPasswordResetEmail(email, resetUrl) {
       </html>
     `
   });
+
+  if (error) {
+    throw new Error(
+      error.message ||
+      'Password reset email delivery failed'
+    );
+  }
+
+  return data;
 }
 
 async function sendVerificationEmail(email, verifyUrl) {

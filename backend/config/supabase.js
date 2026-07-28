@@ -25,6 +25,16 @@ if (!supabaseUrl || !serviceRoleKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, serviceRoleKey);
+const supabase = createClient(
+  supabaseUrl,
+  serviceRoleKey,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  }
+);
 
 module.exports = supabase;
