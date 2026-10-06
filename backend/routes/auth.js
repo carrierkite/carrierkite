@@ -621,6 +621,49 @@ router.post('/disable-account', async (req, res) => {
   }
 });
 
-router.get('/ping', (req, res) => res.json({ ok: true }));
+const SUPABASE_ACTIVITY_INTERVAL_MS = 8 * 60 * 60 * 1000;
+const SUPABASE_ACTIVITY_FAILURE_COOLDOWN_MS = 15 * 60 * 1000;
+let lastSupabaseActivitySuccessAt = 0;
+let lastSupabaseActivityFailureAt = 0;
+let supabaseActivityCheckPromise = null;
+
+router.get('/ping', async (req, res) => {
+  const now = Date.now();
+  const checkIsDue =
+    now - lastSupabaseActivitySuccessAt >= SUPABASE_ACTIVITY_INTERVAL_MS;
+  const failureCooldownIsActive =
+    now - lastSupabaseActivityFailureAt <
+    SUPABASE_ACTIVITY_FAILURE_COOLDOWN_MS;
+
+  if (checkIsDue && !failureCooldownIsActive) {
+    if (!supabaseActivityCheckPromise) {
+      supabaseActivityCheckPromise = (async () => {
+        const { error } = await supabase
+          .from('brokers')
+          .select('id')
+          .limit(1);
+
+        if (error) throw error;
+
+        lastSupabaseActivitySuccessAt = Date.now();
+        console.info('[supabase-activity] read-only check succeeded');
+      })()
+        .catch((error) => {
+          lastSupabaseActivityFailureAt = Date.now();
+          console.error(
+            '[supabase-activity] check failed:',
+            error?.message || 'Unknown error'
+          );
+        })
+        .finally(() => {
+          supabaseActivityCheckPromise = null;
+        });
+    }
+
+    await supabaseActivityCheckPromise;
+  }
+
+  return res.json({ ok: true });
+});
 
 module.exports = router;
