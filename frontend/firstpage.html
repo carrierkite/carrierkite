@@ -29,6 +29,7 @@
                 <li><a href="#features" class="nav-link">Features</a></li>
                 <li><a href="#pricing" class="nav-link">Pricing</a></li>
                 <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
                 <li><a href="./index.html" class="nav-link login-btn">Login</a></li>
                 <li><a href="./index.html" class="nav-link cta-btn">Get Started</a></li>
             </ul>
@@ -356,6 +357,55 @@
         </div>
     </section>
 
+    <!-- ================= CONTACT ================= -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Contact Us</h2>
+                <p class="section-subtitle">Have a question about CarrierKite? Send us a message and we'll get back to you shortly.</p>
+            </div>
+
+            <div class="contact-card">
+                <div id="contact-alert" class="upload-alert"></div>
+
+                <form class="contact-form" id="contactForm" novalidate>
+                    <div class="form-group">
+                        <label class="form-label" for="contact-name">Your Name</label>
+                        <input type="text" id="contact-name" class="form-input" placeholder="John Doe" required maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="contact-email">Email Address</label>
+                        <input type="email" id="contact-email" class="form-input" placeholder="you@company.com" autocomplete="email" inputmode="email" required maxlength="254">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="contact-topic">Please Select a Topic</label>
+                        <select id="contact-topic" class="form-input" required>
+                            <option value="" selected disabled>&mdash;Please choose an option&mdash;</option>
+                            <option value="general">General Inquiry</option>
+                            <option value="sales">Sales &amp; Pricing</option>
+                            <option value="support">Technical Support</option>
+                            <option value="billing">Billing &amp; Payments</option>
+                            <option value="integration">API &amp; Integrations</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="contact-message">How Can We Help You Today?</label>
+                        <textarea id="contact-message" class="form-input contact-textarea" rows="6" placeholder="Tell us a bit more about your question..." required maxlength="2000"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="contact-submit">
+                        Send Message
+                        <span class="btn-arrow">&rarr;</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
@@ -386,14 +436,14 @@
                         <li><a href="#features">Features</a></li>
                         <li><a href="#pricing">Pricing</a></li>
                         <li><a href="#about">About</a></li>
+                        <li><a href="#contact">Contact</a></li>
                         <li><a href="./index.html">Login</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
                     <h4 class="footer-subtitle">Contact</h4>
                     <ul class="footer-contact">
-                        <li>📍 CA, United States</li>
-                        <li>📞 +1(404)-461-33</li>
+
                         <li>✉️ info@CarrierKite.com</li>
                     </ul>
                 </div>

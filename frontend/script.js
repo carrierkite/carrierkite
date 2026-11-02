@@ -500,4 +500,61 @@ if (navToggle && navMenu) {
 
         updateScrollIndicator();
     }
+
+    // ===== Contact form handler =====
+    const contactForm = document.getElementById('contactForm');
+    if (contactForm) {
+        const contactAlert = document.getElementById('contact-alert');
+        const contactBtn = document.getElementById('contact-submit');
+
+        contactForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const name = document.getElementById('contact-name').value.trim();
+            const email = document.getElementById('contact-email').value.trim();
+            const topic = document.getElementById('contact-topic').value;
+            const message = document.getElementById('contact-message').value.trim();
+
+            if (!name || !email || !topic || !message) {
+                contactAlert.textContent = 'Please fill in all fields before sending.';
+                contactAlert.className = 'upload-alert show error';
+                return;
+            }
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                contactAlert.textContent = 'Please enter a valid email address.';
+                contactAlert.className = 'upload-alert show error';
+                return;
+            }
+
+            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1mNf6xPTqf5ICh3l3hJ8OURSexxbvY0h6zEcPU0V_ggmO2yILw70lRNy-SPCSXehj/exec';
+            const topicLabel = document.getElementById('contact-topic').selectedOptions[0].text;
+
+            const originalBtnHTML = contactBtn.innerHTML;
+            contactBtn.disabled = true;
+            contactBtn.textContent = 'Sending...';
+
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ name, email, topic: topicLabel, message })
+                });
+                const result = await res.json();
+                if (result.result !== 'success') throw new Error(result.error || 'Failed to send message');
+
+                contactAlert.textContent = 'Thanks, ' + name + "! Your message has been sent — we'll get back to you shortly.";
+                contactAlert.className = 'upload-alert show success';
+                contactForm.reset();
+            } catch (err) {
+                console.error('Contact form error:', err);
+                contactAlert.textContent = 'Something went wrong. Please try again or email us at info@CarrierKite.com.';
+                contactAlert.className = 'upload-alert show error';
+            } finally {
+                contactBtn.disabled = false;
+                contactBtn.innerHTML = originalBtnHTML;
+                contactBtn.blur();
+            }
+        });
+    }
 });
