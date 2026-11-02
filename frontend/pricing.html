@@ -16,7 +16,7 @@
     <div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px;">
 
         <!-- <a href="/" class="logo-text" style="margin-bottom:40px; font-size:28px;">CarrierKite</a> -->
-         <a href="/index.html?payment=cancelled" class="logo-text" style="margin-bottom:40px; font-size:28px;">CarrierKite</a>
+         <a href="/login.html?payment=cancelled" class="logo-text" style="margin-bottom:40px; font-size:28px;">CarrierKite</a>
 
         <div id="payment-cancelled" class="upload-alert error hidden" style="margin-bottom:20px; max-width:500px; width:100%;">
             Payment was cancelled. You can try again below.
@@ -61,11 +61,11 @@
         </div>
 
         <!-- <p style="margin-top:24px; color:var(--light-gray); font-size:13px;">
-            Already subscribed? <a href="/" style="color:var(--gold);">Log in</a>
+            Already subscribed? href="/login.html"
         </p> -->
 <p style="margin-top:24px; color:var(--light-gray); font-size:13px; text-align:center;">
     Not ready to subscribe?
-    <a href="/index.html?payment=cancelled" style="color:var(--gold);">
+    <a href="/login.html?payment=cancelled" style="color:var(--gold);">
         Go back to login
     </a>
 </p>
@@ -115,7 +115,7 @@ async function handleSubscribe() {
 
     const sessionString = localStorage.getItem('session');
     if (!sessionString) {
-        window.location.href = '/';
+        window.location.href = '/login.html';
         return;
     }
 

@@ -47,7 +47,7 @@ router.post('/create-checkout-session', async (req, res) => {
       customer_email: broker.email,
       metadata: { broker_id: broker.id },
       success_url: `${process.env.APP_URL}/dashboard.html?payment=success`,
-      cancel_url:  `${process.env.APP_URL}/index.html?payment=cancelled`
+      cancel_url:  `${process.env.APP_URL}/login.html?payment=cancelled`
     });
 
     return res.status(200).json({ url: session.url });

@@ -282,6 +282,15 @@ app.get('/pricing.html', (req, res) => {
 });
 
 
+// Pretty URL: carrierkite.com/login
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/login.html'));
+});
+
+// Legacy: old /firstpage.html links -> 301 to landing page
+app.get('/firstpage.html', (req, res) => {
+  res.redirect(301, '/');
+});
 // 404 catch-all — must be before error handler
 app.use((req, res, next) => {
     if (req.path.startsWith('/api/')) {

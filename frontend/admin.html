@@ -144,13 +144,13 @@
             const sessionString = localStorage.getItem('session');
             if (!sessionString) {
                 alert('Not logged in');
-                window.location.href = '/';
+                window.location.href = '/login.html';
                 return null;
             }
             const session = JSON.parse(sessionString);
             if (!session.access_token) {
                 alert('Session expired');
-                window.location.href = '/';
+                window.location.href = '/login.html';
                 return null;
             }
             return session.access_token;
@@ -160,7 +160,7 @@
             localStorage.removeItem('session');
             localStorage.removeItem('user');
             localStorage.removeItem('broker');
-            window.location.href = '/';
+            window.location.href = '/login.html';
         }
 
         // ─── SIDEBAR NAV ──────────────────────────────────────────────
@@ -344,7 +344,7 @@ function escapeHTML(str) {
         async function verifySession() {
     const sessionString = localStorage.getItem('session');
     if (!sessionString) {
-        window.location.href = '/';
+        window.location.href = '/login.html';
         return false;
     }
 
@@ -361,7 +361,7 @@ function escapeHTML(str) {
             localStorage.removeItem('user');
             localStorage.removeItem('broker');
             alert('Your session has expired. Please log in again.');
-            window.location.href = '/';
+            window.location.href = '/login.html';
             return false;
         }
 

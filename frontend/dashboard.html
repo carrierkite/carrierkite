@@ -349,7 +349,7 @@ const API_URL = window.location.hostname === 'localhost'
         localStorage.removeItem('session');
         localStorage.removeItem('user');
         localStorage.removeItem('broker');
-        window.location.href = '/?session=expired';
+        window.location.href = '/login.html?session=expired';
         return null;
     }
     return res;
@@ -907,7 +907,7 @@ async function refreshBrokerIfNeeded() {
       const broker = localStorage.getItem('broker');
 
       if (!session || !broker) {
-        window.location.href = '/';
+        window.location.href = '/login.html';
         return false;
       }
 
@@ -925,7 +925,7 @@ if (currentBroker.role !== 'super_admin') {
     localStorage.removeItem('user');
     localStorage.removeItem('broker');
     alert('Your account is not active. Please contact support.');
-    window.location.href = '/';
+    window.location.href = '/login.html';
     return false;
   }
 }
@@ -988,7 +988,7 @@ return true;
         localStorage.removeItem('session');
         localStorage.removeItem('user');
         localStorage.removeItem('broker');
-        window.location.href = '/';
+        window.location.href = '/login.html';
       } catch (err) {
         console.error('Disable account error:', err);
         alert(err.message || 'Failed to disable account. Please try again or contact support.');
@@ -999,7 +999,7 @@ return true;
       localStorage.removeItem('session');
       localStorage.removeItem('user');
       localStorage.removeItem('broker');
-      window.location.href = '/';
+      window.location.href = '/login.html';
     }
 
     function showAlert(elementId, message, type) {
@@ -1218,7 +1218,7 @@ applyPacketFilters();
         async function verifySession() {
     const sessionString = localStorage.getItem('session');
     if (!sessionString) {
-        window.location.href = '/';
+        window.location.href = '/login.html';
         return false;
     }
 
@@ -1235,7 +1235,7 @@ applyPacketFilters();
             localStorage.removeItem('user');
             localStorage.removeItem('broker');
             alert('Your session has expired. Please log in again.');
-            window.location.href = '/';
+            window.location.href = '/login.html';
             return false;
         }
 
