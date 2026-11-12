@@ -400,15 +400,44 @@ async function lookupCarrier() {
         let lookupUrl = `${API_URL}/carriers/lookup?`;
         lookupUrl += lookupType === 'mc' ? `mc=${cleanInput}` : `usdot=${cleanInput}`;
 
-        const response = await authFetch(lookupUrl, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${currentSession.access_token}` }
-        });
+        const controller = new AbortController();
+        const lookupTimeout = setTimeout(() => controller.abort(), 25000);
+        let response;
+        try {
+            response = await authFetch(lookupUrl, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${currentSession.access_token}` },
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(lookupTimeout);
+        }
         if (!response) return;
 
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (parseErr) {
+            data = { success: false, networkError: true };
+        }
 
-        if (!data.success || !data.carrier) {
+        if (data.networkError) {
+            currentCarrierData = null;
+            document.getElementById('carrier-mc').value = lookupType === 'mc' ? cleanInput : '';
+            document.getElementById('carrier-usdot').value = lookupType === 'usdot' ? cleanInput : '';
+            document.getElementById('carrier-fmcsa-email').value = '';
+            document.getElementById('carrier-email-badge').textContent = '';
+            document.getElementById('carrier-email-badge').className = '';
+            document.getElementById('carrier-verified').value = 'true';
+            banner.className = 'carrier-banner warning';
+            banner.innerHTML = `<span>⚠️</span><span>FMCSA verification is temporarily unavailable. You can click Lookup to retry, or enter the Carrier Name and Carrier Email manually below to send this packet now.</span>`;
+            banner.style.display = 'flex';
+            sendBtn.disabled = false;
+            sendBtnLabel.textContent = 'Send Packet to Carrier';
+            return;
+        }
+
+        if ((!data.success && !data.requiresManualVerification) || !data.carrier) {
             errorDiv.textContent = data.error || 'Carrier not found. Please double-check the MC/USDOT number.';
             errorDiv.style.display = 'block';
             resetCarrierVerification();
@@ -449,9 +478,26 @@ async function lookupCarrier() {
 
     } catch (error) {
         console.error('Carrier lookup error:', error);
-        errorDiv.textContent = 'Failed to look up carrier. Please try again.';
-        errorDiv.style.display = 'block';
-        resetCarrierVerification();
+        const cleanFallback = document.getElementById('carrier-lookup-id').value.trim().replace(/[^0-9]/g, '');
+        const lookupTypeFallback = document.getElementById('carrier-lookup-type').value;
+        if (cleanFallback) {
+            currentCarrierData = null;
+            document.getElementById('carrier-mc').value = lookupTypeFallback === 'mc' ? cleanFallback : '';
+            document.getElementById('carrier-usdot').value = lookupTypeFallback === 'usdot' ? cleanFallback : '';
+            document.getElementById('carrier-fmcsa-email').value = '';
+            document.getElementById('carrier-email-badge').textContent = '';
+            document.getElementById('carrier-email-badge').className = '';
+            document.getElementById('carrier-verified').value = 'true';
+            banner.className = 'carrier-banner warning';
+            banner.innerHTML = `<span>⚠️</span><span>FMCSA verification could not be reached right now. You can retry Lookup, or enter Carrier Name and Carrier Email manually below to send this packet now.</span>`;
+            banner.style.display = 'flex';
+            sendBtn.disabled = false;
+            sendBtnLabel.textContent = 'Send Packet to Carrier';
+        } else {
+            errorDiv.textContent = 'Failed to look up carrier. Please try again.';
+            errorDiv.style.display = 'block';
+            resetCarrierVerification();
+        }
     } finally {
         btnText.style.display = 'inline';
         btnLoading.style.display = 'none';
