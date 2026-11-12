@@ -924,7 +924,7 @@ if (currentBroker.role !== 'super_admin') {
     localStorage.removeItem('session');
     localStorage.removeItem('user');
     localStorage.removeItem('broker');
-    alert('Your account is not active. Please contact support.');
+    alert('Your account is not active. Please contact support at support@carrierkite.com.');
     window.location.href = '/login.html';
     return false;
   }
@@ -966,12 +966,12 @@ return true;
         }
       } catch (err) {
         console.error('Cancel subscription error:', err);
-        alert(err.message || 'Failed to cancel subscription. Please try again or contact support.');
+        alert(err.message || 'Failed to cancel subscription. Please try again or contact support@carrierkite.com.');
       }
     }
 
     async function disableAccount() {
-      if (!confirm('WARNING: This will immediately disable your account. You will lose access to all features and be logged out. Your data will not be deleted, but you will need to contact support to reactivate. Continue?')) return;
+      if (!confirm('WARNING: This will immediately disable your account. You will lose access to all features and be logged out. Your data will not be deleted, but you will need to contact support@carrierkite.com to reactivate. Continue?')) return;
 
       try {
         const res = await authFetch(`${API_URL}/auth/disable-account`, {
@@ -991,7 +991,7 @@ return true;
         window.location.href = '/login.html';
       } catch (err) {
         console.error('Disable account error:', err);
-        alert(err.message || 'Failed to disable account. Please try again or contact support.');
+        alert(err.message || 'Failed to disable account. Please try again or contact support@carrierkite.com.');
       }
     }
 

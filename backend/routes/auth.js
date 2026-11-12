@@ -188,7 +188,7 @@ is_active: false
     if (profileError) {
       console.error('Profile creation error:', profileError);
       return res.status(500).json({
-        error: 'Account created but failed to create broker profile. Please contact support.'
+        error: 'Account created but failed to create broker profile. Please contact support@carrierkite.com.'
       });
     }
 

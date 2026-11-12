@@ -548,7 +548,7 @@ if (navToggle && navMenu) {
                 contactForm.reset();
             } catch (err) {
                 console.error('Contact form error:', err);
-                contactAlert.textContent = 'Something went wrong. Please try again or email us at info@CarrierKite.com.';
+                contactAlert.textContent = 'Something went wrong. Please try again or email us at support@carrierkite.com or info@CarrierKite.com.';
                 contactAlert.className = 'upload-alert show error';
             } finally {
                 contactBtn.disabled = false;

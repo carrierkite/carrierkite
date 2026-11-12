@@ -396,6 +396,7 @@ async function sendSubscriptionThankYouEmail(brokerEmail, companyName) {
 
   await resend.emails.send({
     from: FROM,
+    reply_to: 'support@carrierkite.com',
     to: brokerEmail,
     subject: 'Thank you for subscribing to CarrierKite!',
     html: `
@@ -424,7 +425,7 @@ async function sendSubscriptionThankYouEmail(brokerEmail, companyName) {
                   </a>
                 </p>
                 <p style="font-size:14px;color:#777;margin:0;line-height:1.5;">
-                  If you have any questions or need assistance, simply reply to this email or contact our support team. We're thrilled to have you on board!
+                  If you have any questions or need assistance, simply reply to this email or contact our support team at <a href="mailto:support@carrierkite.com" style="color:#b8941f;text-decoration:none;">support@carrierkite.com</a>. We're thrilled to have you on board!
                 </p>
               </td></tr>
               <tr><td style="background:#f8f8f8;padding:20px;text-align:center;border-top:1px solid #eee;">

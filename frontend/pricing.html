@@ -138,7 +138,7 @@ async function handleSubscribe() {
 if (!res.ok) throw new Error(data.error || 'Failed to start checkout');
 
 if (!data.url) {
-    throw new Error('Stripe did not return a checkout URL. Please contact support.');
+    throw new Error('Stripe did not return a checkout URL. Please contact support@carrierkite.com.');
 }
 
 window.location.href = data.url;
